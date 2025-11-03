@@ -1,7 +1,5 @@
 # project3_group7
 
-## 🚀 Quick Start
-
 ### Install Dependencies
 ```bash
 npm install
