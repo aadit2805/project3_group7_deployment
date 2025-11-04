@@ -1,9 +1,7 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import apiRouter from './routes/api';
-
-dotenv.config();
+import { testConnection } from './config/db';
 
 const app: Express = express();
 const port = process.env.PORT || 3001;
@@ -42,6 +40,8 @@ app.use((err: Error, _req: Request, res: Response) => {
     message: err.message,
   });
 });
+
+testConnection();
 
 app.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
