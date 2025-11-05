@@ -7,8 +7,6 @@
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts",
-    "db:init": "tsx src/db/init_db.ts",
-    "db:reset": "tsx src/db/reset_db.ts"
     "prisma:generate": "prisma generate",
     "prisma:pull": "prisma db pull",
     "prisma:push": "prisma db push",
