@@ -4,11 +4,15 @@ dotenv.config();
 import express from 'express';
 import pool from './db';
 import cors from 'cors';
+import apiRouter from './routes/api';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 const port = process.env.PORT || 3001;
+
+// Mount API router
+app.use('/api', apiRouter);
 
 app.post('/api/orders', async (req, res) => {
   const { order_items } = req.body;
@@ -33,10 +37,13 @@ app.post('/api/orders', async (req, res) => {
     for (const item of order_items) {
       const mealPrice = item.mealType.meal_type_price;
       const entreesUpcharge = item.entrees.reduce(
-        (acc: number, entree: any) => acc + entree.upcharge,
+        (acc: number, entree: { upcharge: number }) => acc + entree.upcharge,
         0
       );
-      const sidesUpcharge = item.sides.reduce((acc: number, side: any) => acc + side.upcharge, 0);
+      const sidesUpcharge = item.sides.reduce(
+        (acc: number, side: { upcharge: number }) => acc + side.upcharge,
+        0
+      );
       totalPrice += mealPrice + entreesUpcharge + sidesUpcharge;
 
       const mealInsertQuery =
