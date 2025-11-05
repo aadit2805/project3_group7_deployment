@@ -1,8 +1,12 @@
 import { Router, Request, Response } from 'express';
+import { getMenuItems } from '../controllers/menuController';
 import { ApiResponse } from '../types';
 import pool from '../config/db';
 
 const router = Router();
+
+// GET /api/menu-items
+router.get('/menu-items', getMenuItems);
 
 // GET /api/db-test
 router.get('/db-test', async (_req: Request, res: Response) => {
