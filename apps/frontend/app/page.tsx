@@ -13,6 +13,11 @@ export default function Home() {
             <li>ESLint for code quality</li>
           </ul>
         </div>
+        <div className="mt-8 text-center">
+          <a href="/customer-kiosk" className="text-blue-500 hover:underline">
+            Go to Customer Kiosk
+          </a>
+        </div>
       </div>
     </main>
   );
