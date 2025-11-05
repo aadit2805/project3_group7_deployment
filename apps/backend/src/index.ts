@@ -1,13 +1,75 @@
-
 import express from 'express';
 import pool from './db';
 import cors from 'cors';
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 const port = process.env.PORT || 3001;
 
+app.post('/api/orders', async (req, res) => {
+  const { order_items } = req.body;
 
+  if (!order_items || !Array.isArray(order_items)) {
+    return res.status(400).json({ error: 'Invalid order data' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const orderInsertQuery =
+      'INSERT INTO "Order" (staff_id, datetime, price) VALUES ($1, $2, $3) RETURNING order_id';
+    const orderValues = [1, new Date(), 0]; // Assuming staff_id 1 and initial price 0
+    const orderResult = await client.query(orderInsertQuery, orderValues);
+    const orderId = orderResult.rows[0].order_id;
+
+    let totalPrice = 0;
+
+    for (const item of order_items) {
+      const mealPrice = item.mealType.meal_type_price;
+      const entreesUpcharge = item.entrees.reduce(
+        (acc: number, entree: any) => acc + entree.upcharge,
+        0
+      );
+      const sidesUpcharge = item.sides.reduce((acc: number, side: any) => acc + side.upcharge, 0);
+      totalPrice += mealPrice + entreesUpcharge + sidesUpcharge;
+
+      const mealInsertQuery =
+        'INSERT INTO Meal (order_id, meal_type_id) VALUES ($1, $2) RETURNING meal_id';
+      const mealValues = [orderId, item.mealType.meal_type_id];
+      const mealResult = await client.query(mealInsertQuery, mealValues);
+      const mealId = mealResult.rows[0].meal_id;
+
+      for (const entree of item.entrees) {
+        const detailInsertQuery =
+          'INSERT INTO Meal_Detail (meal_id, meal_type_id, menu_item_id, role) VALUES ($1, $2, $3, $4)';
+        const detailValues = [mealId, item.mealType.meal_type_id, entree.menu_item_id, 'entree'];
+        await client.query(detailInsertQuery, detailValues);
+      }
+
+      for (const side of item.sides) {
+        const detailInsertQuery =
+          'INSERT INTO Meal_Detail (meal_id, meal_type_id, menu_item_id, role) VALUES ($1, $2, $3, $4)';
+        const detailValues = [mealId, item.mealType.meal_type_id, side.menu_item_id, 'side'];
+        await client.query(detailInsertQuery, detailValues);
+      }
+    }
+
+    const updateOrderPriceQuery = 'UPDATE "Order" SET price = $1 WHERE order_id = $2';
+    await client.query(updateOrderPriceQuery, [totalPrice, orderId]);
+
+    await client.query('COMMIT');
+    res.status(201).json({ message: 'Order submitted successfully', orderId });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error submitting order:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
+  }
+});
 
 app.get('/api/meal-types/:id', async (req, res) => {
   try {

@@ -6,7 +6,9 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "db:init": "tsx src/db/init_db.ts",
+    "db:reset": "tsx src/db/reset_db.ts"
   },
   "dependencies": {
     "@types/pg": "^8.15.6",
