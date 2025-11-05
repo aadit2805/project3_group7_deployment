@@ -1,10 +1,18 @@
 import { Router, Request, Response } from 'express';
+import { getMenuItems } from '../controllers/menuController';
+import { createOrder } from '../controllers/orderController';
 import { ApiResponse } from '../types';
 import pool from '../config/db';
 import translationRoutes from './translation.routes';
 import weatherRoutes from './weather.routes';
 
 const router = Router();
+
+// GET /api/menu-items
+router.get('/menu-items', getMenuItems);
+
+// POST /api/orders
+router.post('/orders', createOrder);
 
 // GET /api/db-test
 router.get('/db-test', async (_req: Request, res: Response) => {
