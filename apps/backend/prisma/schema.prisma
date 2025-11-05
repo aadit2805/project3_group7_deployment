@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  order_id Int       @id
+  staff_id Int?
+  datetime DateTime? @db.Timestamp(6)
+  meal_id  Int?
+  price    Float?
+  staff    staff?    @relation(fields: [staff_id], references: [staff_id], onDelete: NoAction, onUpdate: NoAction)
+  meal     meal[]
+  payment  payment[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model dailysummaries {
+  summary_id    Int       @id @default(autoincrement())
+  business_date DateTime  @unique @db.Date
+  total_sales   Decimal   @default(0.00) @db.Decimal(10, 2)
+  total_tax     Decimal   @default(0.00) @db.Decimal(10, 2)
+  net_sales     Decimal   @default(0.00) @db.Decimal(10, 2)
+  order_count   Int       @default(0)
+  status        String    @db.VarChar(20)
+  opened_at     DateTime? @default(now()) @db.Timestamptz(6)
+  closed_at     DateTime? @db.Timestamptz(6)
+}
+
+model inventory {
+  inventory_id Int         @id
+  menu_item_id Int?
+  stock        Int?
+  reorder      Boolean?
+  menu_items   menu_items? @relation(fields: [menu_item_id], references: [menu_item_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model meal {
+  meal_id      Int           @id
+  order_id     Int?
+  meal_type_id Int?
+  meal_types   meal_types?   @relation(fields: [meal_type_id], references: [meal_type_id], onDelete: NoAction, onUpdate: NoAction)
+  Order        Order?        @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction)
+  meal_detail  meal_detail[]
+}
+
+model meal_detail {
+  detail_id    Int         @id
+  meal_id      Int?
+  meal_type_id Int?
+  menu_item_id Int?
+  role         String?     @db.VarChar(50)
+  meal         meal?       @relation(fields: [meal_id], references: [meal_id], onDelete: NoAction, onUpdate: NoAction)
+  meal_types   meal_types? @relation(fields: [meal_type_id], references: [meal_type_id], onDelete: NoAction, onUpdate: NoAction)
+  menu_items   menu_items? @relation(fields: [menu_item_id], references: [menu_item_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model meal_types {
+  meal_type_id    Int           @id
+  meal_type_name  String?       @db.VarChar(255)
+  meal_type_price Float?
+  entree_count    Int?
+  side_count      Int?
+  drink_size      String?       @db.VarChar(50)
+  meal            meal[]
+  meal_detail     meal_detail[]
+}
+
+model menu_items {
+  menu_item_id Int           @id
+  name         String?       @db.VarChar(255)
+  upcharge     Float?
+  is_available Boolean?
+  item_type    String?       @db.VarChar(50)
+  inventory    inventory[]
+  meal_detail  meal_detail[]
+}
+
+model non_food_inventory {
+  supply_id Int      @id
+  name      String?  @db.VarChar(255)
+  stock     Int?
+  reorder   Boolean?
+}
+
+model payment {
+  payment_id Int      @id
+  order_id   Int?
+  method     String?  @db.VarChar(255)
+  amount     Decimal? @db.Decimal(10, 2)
+  Order      Order?   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model staff {
+  staff_id    Int      @id
+  username    String?  @db.VarChar(255)
+  password    String?  @db.VarChar(255)
+  permissions Boolean?
+  Order       Order[]
+}
