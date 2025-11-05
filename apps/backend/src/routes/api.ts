@@ -3,6 +3,8 @@ import { getMenuItems } from '../controllers/menuController';
 import { createOrder } from '../controllers/orderController';
 import { ApiResponse } from '../types';
 import pool from '../config/db';
+import translationRoutes from './translation.routes';
+import weatherRoutes from './weather.routes';
 
 const router = Router();
 
@@ -66,6 +68,60 @@ router.post('/users', (req: Request, res: Response<ApiResponse<{ id: number; nam
       name,
     },
   });
+});
+
+// External API routes
+router.use('/translation', translationRoutes);
+router.use('/weather', weatherRoutes);
+
+// Test external APIs
+router.get('/test-apis', async (_req: Request, res: Response) => {
+  const results = {
+    translation: { status: 'not tested', error: null as string | null },
+    weather: { status: 'not tested', error: null as string | null },
+  };
+
+  // Test translation
+  try {
+    const axios = require('axios');
+    const response = await axios.post(
+      'https://translation.googleapis.com/language/translate/v2',
+      {},
+      {
+        params: {
+          q: 'Hello',
+          target: 'es',
+          key: process.env.GOOGLE_TRANSLATE_API_KEY,
+        },
+      }
+    );
+    results.translation.status = 'connected ✅';
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+    results.translation.status = 'failed ❌';
+    results.translation.error = err.response?.data?.error?.message || err.message || 'Unknown error';
+  }
+
+  // Test weather
+  try {
+    const axios = require('axios');
+    const response = await axios.get(
+      'https://api.openweathermap.org/data/2.5/weather',
+      {
+        params: {
+          q: 'London',
+          appid: process.env.OPENWEATHER_API_KEY,
+        },
+      }
+    );
+    results.weather.status = 'connected ✅';
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    results.weather.status = 'failed ❌';
+    results.weather.error = err.response?.data?.message || err.message || 'Unknown error';
+  }
+
+  res.json(results);
 });
 
 export default router;
