@@ -43,6 +43,7 @@ CREATE TABLE "Order" (
     datetime TIMESTAMP,
     meal_id INT,
     price DOUBLE PRECISION,
+    status VARCHAR(50) DEFAULT 'pending',
     FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
 );
 

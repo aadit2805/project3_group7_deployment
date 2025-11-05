@@ -8,11 +8,12 @@ datasource db {
 }
 
 model Order {
-  order_id Int       @id
+  order_id Int       @id @default(autoincrement())
   staff_id Int?
   datetime DateTime? @db.Timestamp(6)
   meal_id  Int?
   price    Float?
+  status   String    @default("pending")
   staff    staff?    @relation(fields: [staff_id], references: [staff_id], onDelete: NoAction, onUpdate: NoAction)
   meal     meal[]
   payment  payment[]
