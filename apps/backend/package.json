@@ -4,13 +4,20 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts",
     "db:init": "tsx src/db/init_db.ts",
     "db:reset": "tsx src/db/reset_db.ts"
+    "prisma:generate": "prisma generate",
+    "prisma:pull": "prisma db pull",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:reset": "prisma migrate reset"
   },
   "dependencies": {
+    "@prisma/client": "^6.18.0",
     "@types/pg": "^8.15.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -24,6 +31,7 @@
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
     "eslint": "^8.54.0",
+    "prisma": "^6.18.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.0"
   }
