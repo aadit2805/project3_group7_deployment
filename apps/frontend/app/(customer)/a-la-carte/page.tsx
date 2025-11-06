@@ -84,6 +84,12 @@ const ALaCartePage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold text-center mb-8">A La Carte</h1>
+      <div className="mb-4">
+        <Link href="/meal-type-selection" className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center">
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          Back to Meal Type Selection
+        </Link>
+      </div>
       <div className="grid grid-cols-1 gap-8">
         <div className="col-span-1">
           <section className="mb-10">
