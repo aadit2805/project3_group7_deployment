@@ -41,6 +41,12 @@ const CustomerKiosk = () => {
   const [selectedSides, setSelectedSides] = useState<MenuItem[]>([]);
 
   useEffect(() => {
+    if (!mealTypeId) {
+      router.push('/meal-type-selection');
+    }
+  }, [mealTypeId, router]);
+
+  useEffect(() => {
     if (mealTypeId) {
       const fetchMealTypeAndMenuItems = async () => {
         try {
@@ -108,7 +114,7 @@ const CustomerKiosk = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {mealTypeId && selectedMealType ? (
+      {selectedMealType && (
         <>
           <h1 className="text-4xl font-bold text-center mb-8">
             Customize Your {selectedMealType.meal_type_name}
@@ -168,15 +174,6 @@ const CustomerKiosk = () => {
             </button>
           </div>
         </>
-      ) : (
-        <div className="text-center py-10">
-          <h1 className="text-3xl font-bold">Please select a meal type to begin.</h1>
-          <p className="text-lg mt-4">
-            <a href="/meal-type-selection" className="text-blue-500 hover:underline">
-              Go to Meal Type Selection
-            </a>
-          </p>
-        </div>
       )}
     </div>
   );

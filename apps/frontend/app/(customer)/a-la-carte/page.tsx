@@ -1,0 +1,146 @@
+'use client';
+
+import React, { useState, useEffect, useContext } from 'react';
+import Link from 'next/link';
+import { OrderContext, OrderItem } from '@/app/context/OrderContext';
+
+// Interfaces to match the data structure
+interface MenuItem {
+  menu_item_id: number;
+  name: string;
+  upcharge: number;
+  is_available: boolean;
+  item_type: string;
+}
+
+interface MealType {
+  meal_type_id: number;
+  meal_type_name: string;
+  meal_type_price: number;
+  entree_count: number;
+  side_count: number;
+  drink_size: string;
+}
+
+const ALaCartePage = () => {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
+  const context = useContext(OrderContext);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const menuItemsRes = await fetch('http://localhost:3001/api/menu-items');
+        const menuItemsData = await menuItemsRes.json();
+        setMenuItems(menuItemsData);
+
+        const mealTypesRes = await fetch('http://localhost:3001/api/meal-types');
+        const mealTypesData = await mealTypesRes.json();
+        setMealTypes(mealTypesData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (!context) {
+    return <div>Loading...</div>; // Or some other error/loading state
+  }
+
+  const { order, setOrder } = context;
+
+  const handleAddItem = (item: MenuItem, sizeMealTypeId: number) => {
+    const mealType = mealTypes.find(mt => mt.meal_type_id === sizeMealTypeId);
+    if (!mealType) {
+      console.error('Corresponding meal type not found for ID:', sizeMealTypeId);
+      return;
+    }
+
+    const newOrderItem: OrderItem = {
+      mealType: mealType,
+      entrees: item.item_type === 'entree' ? [item] : [],
+      sides: item.item_type === 'side' ? [item] : [],
+    };
+
+    setOrder([...order, newOrderItem]);
+  };
+
+  const entrees = menuItems.filter((item) => item.item_type === 'entree');
+  const sides = menuItems.filter((item) => item.item_type === 'side');
+
+  const entreeSizes = [
+    { name: 'Small', meal_type_id: 4 },
+    { name: 'Medium', meal_type_id: 5 },
+    { name: 'Large', meal_type_id: 6 },
+  ];
+
+  const sideSizes = [
+    { name: 'Medium', meal_type_id: 7 },
+    { name: 'Large', meal_type_id: 8 },
+  ];
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold text-center mb-8">A La Carte</h1>
+      <div className="grid grid-cols-3 gap-8">
+        <div className="col-span-2">
+          <section className="mb-10">
+            <h2 className="text-3xl font-semibold mb-4">Entrees</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {entrees.map((item) => (
+                <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-xl font-bold mb-2">{item.name}</h3>
+                  <div className="flex space-x-2 mt-4">
+                    {entreeSizes.map(size => (
+                      <button key={size.meal_type_id} onClick={() => handleAddItem(item, size.meal_type_id)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
+                        Add {size.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-3xl font-semibold mb-4">Sides</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {sides.map((item) => (
+                <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-xl font-bold mb-2">{item.name}</h3>
+                  <div className="flex space-x-2 mt-4">
+                    {sideSizes.map(size => (
+                      <button key={size.meal_type_id} onClick={() => handleAddItem(item, size.meal_type_id)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm">
+                        Add {size.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <div className="col-span-1 bg-gray-100 p-6 rounded-lg">
+          <h2 className="text-2xl font-bold mb-4">Current Order</h2>
+          <div className="flex flex-col space-y-4">
+            {order.map((orderItem, index) => (
+              <div key={index} className="bg-white p-3 rounded shadow">
+                <p className="font-bold">{orderItem.mealType.meal_type_name}</p>
+                {[...orderItem.entrees, ...orderItem.sides].map(item => (
+                  <p key={item.menu_item_id} className="pl-2">- {item.name}</p>
+                ))}
+              </div>
+            ))}
+          </div>
+          <Link href="/meal-type-selection" className="block text-center bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6">
+            Done
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ALaCartePage;
