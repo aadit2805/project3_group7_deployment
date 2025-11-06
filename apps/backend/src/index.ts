@@ -71,11 +71,11 @@ app.post('/api/orders', async (req, res) => {
     await client.query(updateOrderPriceQuery, [totalPrice, orderId]);
 
     await client.query('COMMIT');
-    res.status(201).json({ message: 'Order submitted successfully', orderId });
+    return res.status(201).json({ message: 'Order submitted successfully', orderId });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Error submitting order:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   } finally {
     client.release();
   }
@@ -96,7 +96,7 @@ app.get('/api/meal-types/:id', async (req, res) => {
   }
 });
 
-app.get('/api/meal-types', async (req, res) => {
+app.get('/api/meal-types', async (_req, res) => {
   try {
     const result = await pool.query('SELECT * FROM meal_types');
     res.json(result.rows);
@@ -123,7 +123,7 @@ app.get('/api/menu-items', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.send('Hello from the backend!');
 });
 

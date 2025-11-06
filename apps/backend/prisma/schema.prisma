@@ -8,12 +8,11 @@ datasource db {
 }
 
 model Order {
-  order_id     Int       @id
+  order_id     Int       @id @default(autoincrement())
   staff_id     Int?
   datetime     DateTime? @db.Timestamp(6)
-  meal_id      Int?
   price        Float?
-  order_status String?   @default("pending") @db.VarChar(50)
+  order_status String?   @db.VarChar(50)
   staff        staff?    @relation(fields: [staff_id], references: [staff_id], onDelete: NoAction, onUpdate: NoAction)
   meal         meal[]
   payment      payment[]
@@ -42,7 +41,7 @@ model inventory {
 }
 
 model meal {
-  meal_id      Int           @id
+  meal_id      Int           @id @default(autoincrement())
   order_id     Int?
   meal_type_id Int?
   meal_types   meal_types?   @relation(fields: [meal_type_id], references: [meal_type_id], onDelete: NoAction, onUpdate: NoAction)
@@ -51,7 +50,7 @@ model meal {
 }
 
 model meal_detail {
-  detail_id    Int         @id
+  detail_id    Int         @id @default(autoincrement())
   meal_id      Int?
   meal_type_id Int?
   menu_item_id Int?

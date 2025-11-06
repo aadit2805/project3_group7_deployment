@@ -58,47 +58,72 @@ const OrderPane = () => {
         <p>Your order is empty.</p>
       ) : (
         <>
-          {order.map((orderItem, index) => (
-            <div key={index} className="mb-4 pb-4 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold">{orderItem.mealType.meal_type_name}</h3>
-                <div>
-                  <button
-                    onClick={() => handleEditItem(index)}
-                    className="text-blue-500 hover:text-blue-700 font-bold mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleRemoveFromOrder(index)}
-                    className="text-red-500 hover:text-red-700 font-bold"
-                  >
-                    Remove
-                  </button>
+          {order.map((orderItem, index) => {
+            const isDrinkOnly =
+              orderItem.entrees.length === 0 && orderItem.sides.length === 0 && orderItem.drink;
+            const itemTotalPrice =
+              orderItem.mealType.meal_type_price +
+              orderItem.entrees.reduce((sum, item) => sum + item.upcharge, 0) +
+              orderItem.sides.reduce((sum, item) => sum + item.upcharge, 0) +
+              (orderItem.drink ? orderItem.drink.upcharge : 0);
+
+            return (
+              <div key={index} className="mb-4 pb-4 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-bold">{orderItem.mealType.meal_type_name}</h3>
+                  <div>
+                    <button
+                      onClick={() => handleEditItem(index)}
+                      className="text-blue-500 hover:text-blue-700 font-bold mr-2"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleRemoveFromOrder(index)}
+                      className="text-red-500 hover:text-red-700 font-bold"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
+                {isDrinkOnly ? (
+                  <>
+                    <p>Base Price: ${orderItem.mealType.meal_type_price.toFixed(2)}</p>
+                    {orderItem.drink && (
+                      <p>
+                        Drink: {orderItem.drink.name} (+${orderItem.drink.upcharge.toFixed(2)})
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p>Base Price: ${orderItem.mealType.meal_type_price.toFixed(2)}</p>
+                    <h4 className="text-xl font-semibold mt-4">Entrees:</h4>
+                    <ul>
+                      {orderItem.entrees.map((item) => (
+                        <li key={item.menu_item_id}>
+                          {item.name} (+${item.upcharge.toFixed(2)})
+                        </li>
+                      ))}
+                    </ul>
+                    <h4 className="text-xl font-semibold mt-4">Sides:</h4>
+                    <ul>
+                      {orderItem.sides.map((item) => (
+                        <li key={item.menu_item_id}>
+                          {item.name} (+${item.upcharge.toFixed(2)})
+                        </li>
+                      ))}
+                    </ul>
+                    {orderItem.drink && (
+                      <p className="text-xl font-semibold mt-4">
+                        Drink: {orderItem.drink.name} (+${orderItem.drink.upcharge.toFixed(2)})
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
-              <p>Base Price: ${orderItem.mealType.meal_type_price.toFixed(2)}</p>
-              <h4 className="text-xl font-semibold mt-4">Entrees:</h4>
-              <ul>
-                {orderItem.entrees.map((item) => (
-                  <li key={item.menu_item_id}>
-                    {item.name} (+${item.upcharge.toFixed(2)})
-                  </li>
-                ))}
-              </ul>
-              <h4 className="text-xl font-semibold mt-4">Sides:</h4>
-              <ul>
-                {orderItem.sides.map((item) => (
-                  <li key={item.menu_item_id}>
-                    {item.name} (+${item.upcharge.toFixed(2)})
-                  </li>
-                ))}
-              </ul>
-              {orderItem.mealType.drink_size && (
-                <p className="text-xl font-semibold mt-4">Drink: {orderItem.mealType.drink_size}</p>
-              )}
-            </div>
-          ))}
+            );
+          })}
           <div className="text-right">
             <h3 className="text-2xl font-bold">Total: ${totalPrice.toFixed(2)}</h3>
             <button
