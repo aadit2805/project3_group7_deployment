@@ -12,10 +12,32 @@ const InventoryManager = () => {
   const [currentItem, setCurrentItem] = useState<any>(null);
   const [isFood, setIsFood] = useState(true);
   const [addToMenu, setAddToMenu] = useState(false);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleSort = (column: string) => {
+    const isAsc = sortColumn === column && sortDirection === 'asc';
+    setSortDirection(isAsc ? 'desc' : 'asc');
+    setSortColumn(column);
+
+    const sortedFood = [...foodInventory].sort((a, b) => {
+      if (a[column] < b[column]) return isAsc ? -1 : 1;
+      if (a[column] > b[column]) return isAsc ? 1 : -1;
+      return 0;
+    });
+    setFoodInventory(sortedFood);
+
+    const sortedNonFood = [...nonFoodInventory].sort((a, b) => {
+      if (a[column] < b[column]) return isAsc ? -1 : 1;
+      if (a[column] > b[column]) return isAsc ? 1 : -1;
+      return 0;
+    });
+    setNonFoodInventory(sortedNonFood);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -74,6 +96,7 @@ const InventoryManager = () => {
           ? `/api/inventory/${currentItem.inventory_id}`
           : '/api/inventory';
         body = {
+          is_food: true,
           name: data.name,
           stock: Number(data.stock),
           reorder: data.reorder === 'on',
@@ -86,6 +109,7 @@ const InventoryManager = () => {
         ? `/api/inventory/${currentItem.supply_id}`
         : '/api/inventory';
       body = {
+        is_food: false,
         name: data.name,
         stock: Number(data.stock),
         reorder: data.reorder === 'on',
@@ -149,14 +173,14 @@ const InventoryManager = () => {
           <thead>
             <tr>
               <th className="py-2">Name</th>
-              <th className="py-2">Stock</th>
+              <th className="py-2 cursor-pointer" onClick={() => handleSort('stock')}>Stock {sortColumn === 'stock' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}</th>
               <th className="py-2">Storage</th>
               <th className="py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {foodInventory.map((item: any) => (
-              <tr key={item.inventory_id}>
+              <tr key={item.inventory_id} className={item.stock < 20 ? 'bg-red-200' : ''}>
                 <td className="border px-4 py-2">{item.menu_items.name}</td>
                 <td className="border px-4 py-2">{item.stock}</td>
                 <td className="border px-4 py-2">{item.storage}</td>
@@ -194,14 +218,13 @@ const InventoryManager = () => {
           <thead>
             <tr>
               <th className="py-2">Name</th>
-              <th className="py-2">Stock</th>
-
+              <th className="py-2 cursor-pointer" onClick={() => handleSort('stock')}>Stock {sortColumn === 'stock' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}</th>
               <th className="py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {nonFoodInventory.map((item: any) => (
-              <tr key={item.supply_id}>
+              <tr key={item.supply_id} className={item.stock < 20 ? 'bg-red-200' : ''}>
                 <td className="border px-4 py-2">{item.name}</td>
                 <td className="border px-4 py-2">{item.stock}</td>
 
@@ -239,7 +262,7 @@ const InventoryManager = () => {
                     <input
                       type="text"
                       name="name"
-                      defaultValue={currentItem?.name}
+                      defaultValue={currentItem?.menu_items?.name}
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     />
                   </div>
