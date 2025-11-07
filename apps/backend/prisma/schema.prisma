@@ -102,3 +102,13 @@ model staff {
   permissions Boolean?
   Order       Order[]
 }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  googleId  String?  @unique
+  email     String?  @unique
+  name      String?
+  role      String?  @default("MANAGER") @db.VarChar(50)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

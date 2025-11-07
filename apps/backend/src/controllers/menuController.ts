@@ -118,3 +118,177 @@ export const getMenuItemsWithInventory = async (_req: Request, res: Response): P
     });
   }
 };
+
+// Create a new menu item
+export const createMenuItem = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name, upcharge, is_available, item_type, menu_item_id } = req.body;
+
+    // Validation
+    if (!name || !item_type) {
+      res.status(400).json({
+        error: 'Missing required fields',
+        message: 'Name and item_type are required',
+      });
+      return;
+    }
+
+    // Validate item_type
+    const validTypes = ['entree', 'side', 'drink'];
+    if (!validTypes.includes(item_type.toLowerCase())) {
+      res.status(400).json({
+        error: 'Invalid item_type',
+        message: `item_type must be one of: ${validTypes.join(', ')}`,
+      });
+      return;
+    }
+
+    // Get next menu_item_id if not provided
+    let itemId = menu_item_id;
+    if (!itemId) {
+      const maxIdResult = await pool.query(
+        'SELECT COALESCE(MAX(menu_item_id), 0) + 1 as next_id FROM menu_items'
+      );
+      itemId = maxIdResult.rows[0].next_id;
+    } else {
+      // Check if ID already exists
+      const existingResult = await pool.query(
+        'SELECT menu_item_id FROM menu_items WHERE menu_item_id = $1',
+        [itemId]
+      );
+      if (existingResult.rows.length > 0) {
+        res.status(409).json({
+          error: 'Menu item ID already exists',
+          message: `Menu item with ID ${itemId} already exists`,
+        });
+        return;
+      }
+    }
+
+    // Insert new menu item
+    const result = await pool.query<MenuItem>(
+      `INSERT INTO menu_items (menu_item_id, name, upcharge, is_available, item_type)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING menu_item_id, name, upcharge, is_available, item_type`,
+      [
+        itemId,
+        name,
+        upcharge || 0,
+        is_available !== undefined ? is_available : true,
+        item_type.toLowerCase(),
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Menu item created successfully',
+      data: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Error creating menu item:', error);
+    res.status(500).json({
+      error: 'Failed to create menu item',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};
+
+// Update a menu item
+export const updateMenuItem = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { name, upcharge, is_available, item_type } = req.body;
+
+    // Build update query dynamically
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${paramCount++}`);
+      values.push(name);
+    }
+    if (upcharge !== undefined) {
+      updates.push(`upcharge = $${paramCount++}`);
+      values.push(upcharge);
+    }
+    if (is_available !== undefined) {
+      updates.push(`is_available = $${paramCount++}`);
+      values.push(is_available);
+    }
+    if (item_type !== undefined) {
+      const validTypes = ['entree', 'side', 'drink'];
+      if (!validTypes.includes(item_type.toLowerCase())) {
+        res.status(400).json({
+          error: 'Invalid item_type',
+          message: `item_type must be one of: ${validTypes.join(', ')}`,
+        });
+        return;
+      }
+      updates.push(`item_type = $${paramCount++}`);
+      values.push(item_type.toLowerCase());
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({
+        error: 'No fields to update',
+        message: 'Provide at least one field to update',
+      });
+      return;
+    }
+
+    values.push(id);
+    const result = await pool.query<MenuItem>(
+      `UPDATE menu_items 
+       SET ${updates.join(', ')}
+       WHERE menu_item_id = $${paramCount}
+       RETURNING menu_item_id, name, upcharge, is_available, item_type`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Menu item not found' });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Menu item updated successfully',
+      data: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Error updating menu item:', error);
+    res.status(500).json({
+      error: 'Failed to update menu item',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};
+
+// Delete a menu item
+export const deleteMenuItem = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM menu_items WHERE menu_item_id = $1 RETURNING menu_item_id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Menu item not found' });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Menu item deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting menu item:', error);
+    res.status(500).json({
+      error: 'Failed to delete menu item',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};

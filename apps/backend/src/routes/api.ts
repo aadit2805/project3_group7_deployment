@@ -1,15 +1,26 @@
 import { Router, Request, Response } from 'express';
-import { getMenuItems } from '../controllers/menuController';
+import {
+  getMenuItems,
+  createMenuItem,
+  updateMenuItem,
+  deleteMenuItem,
+} from '../controllers/menuController';
 import { createOrder } from '../controllers/orderController';
 import { ApiResponse } from '../types';
 import pool from '../config/db';
 import translationRoutes from './translation.routes';
 import weatherRoutes from './weather.routes';
+import { isAuthenticated, isManager } from '../index';
 
 const router = Router();
 
 // GET /api/menu-items
 router.get('/menu-items', getMenuItems);
+
+// Manager-only routes for menu items
+router.post('/menu-items', isAuthenticated, isManager, createMenuItem);
+router.put('/menu-items/:id', isAuthenticated, isManager, updateMenuItem);
+router.delete('/menu-items/:id', isAuthenticated, isManager, deleteMenuItem);
 
 // POST /api/orders
 router.post('/orders', createOrder);

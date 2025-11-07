@@ -13,10 +13,15 @@ export default function Home() {
             <li>ESLint for code quality</li>
           </ul>
         </div>
-        <div className="mt-8 text-center">
-          <a href="/customer-kiosk" className="text-blue-500 hover:underline">
-            Go to Customer Kiosk
-          </a>
+        <div className="mt-8 text-center space-y-4">
+          <div>
+            <a href="/customer-kiosk" className="text-blue-500 hover:underline block mb-2">
+              Go to Customer Kiosk
+            </a>
+            <a href="/login" className="text-green-500 hover:underline block font-semibold">
+              🔐 Test OAuth Login
+            </a>
+          </div>
         </div>
       </div>
     </main>
