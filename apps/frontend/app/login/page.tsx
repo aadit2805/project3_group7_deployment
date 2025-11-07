@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/dist/client/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 
-export default function LoginPage() {
+// Separate component that uses useSearchParams
+function LoginContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -16,13 +18,14 @@ export default function LoginPage() {
   }, [searchParams]);
 
   const handleGoogleLogin = () => {
-    // Redirect to backend OAuth endpoint
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
     try {
       window.location.href = `${backendUrl}/auth/google`;
     } catch (error) {
       console.error('Error redirecting to OAuth:', error);
-      setError('Failed to connect to authentication server. Please make sure the backend is running.');
+      setError(
+        'Failed to connect to authentication server. Please make sure the backend is running.'
+      );
     }
   };
 
@@ -30,7 +33,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <div className="z-10 max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
-        
+
         {error && (
           <div className="mb-4 p-4 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-300 rounded">
             {error}
@@ -70,12 +73,26 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <a href="/" className="text-blue-500 hover:underline text-sm">
+          <Link href="/" className="text-blue-500 hover:underline text-sm">
             ← Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </main>
   );
 }
 
+// Main export with Suspense wrapper
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen flex-col items-center justify-center p-24">
+          <div className="text-center">Loading...</div>
+        </main>
+      }
+    >
+      <LoginContent />
+    </Suspense>
+  );
+}

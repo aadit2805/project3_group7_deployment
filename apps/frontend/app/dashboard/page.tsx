@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/dist/client/link';
 
 interface User {
   id: number;
@@ -78,7 +79,9 @@ export default function DashboardPage() {
       });
       const data = await response.json();
       console.log('Auth Status:', data);
-      alert(`Authenticated: ${data.authenticated}\nUser: ${data.user ? JSON.stringify(data.user, null, 2) : 'None'}`);
+      alert(
+        `Authenticated: ${data.authenticated}\nUser: ${data.user ? JSON.stringify(data.user, null, 2) : 'None'}`
+      );
     } catch (err) {
       console.error('Error checking auth status:', err);
     }
@@ -110,7 +113,7 @@ export default function DashboardPage() {
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <div className="z-10 max-w-2xl w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-bold text-center mb-6">Dashboard</h1>
-        
+
         <div className="bg-green-100 dark:bg-green-900 border border-green-400 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-6">
           <p className="font-semibold">✓ Successfully Authenticated!</p>
         </div>
@@ -119,10 +122,18 @@ export default function DashboardPage() {
           <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded">
             <h2 className="text-xl font-semibold mb-4">User Information</h2>
             <div className="space-y-2">
-              <p><span className="font-medium">ID:</span> {user?.id}</p>
-              <p><span className="font-medium">Email:</span> {user?.email || 'N/A'}</p>
-              <p><span className="font-medium">Name:</span> {user?.name || 'N/A'}</p>
-              <p><span className="font-medium">Role:</span> {user?.role || 'N/A'}</p>
+              <p>
+                <span className="font-medium">ID:</span> {user?.id}
+              </p>
+              <p>
+                <span className="font-medium">Email:</span> {user?.email || 'N/A'}
+              </p>
+              <p>
+                <span className="font-medium">Name:</span> {user?.name || 'N/A'}
+              </p>
+              <p>
+                <span className="font-medium">Role:</span> {user?.role || 'N/A'}
+              </p>
             </div>
           </div>
         </div>
@@ -143,12 +154,11 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <a href="/" className="text-blue-500 hover:underline text-sm">
+          <Link href="/" className="text-blue-500 hover:underline text-sm">
             ← Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </main>
   );
 }
-
