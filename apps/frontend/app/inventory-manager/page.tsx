@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 const InventoryManager = () => {
   const [foodInventory, setFoodInventory] = useState([]);
@@ -162,12 +163,19 @@ const InventoryManager = () => {
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-semibold">Food Inventory</h2>
-          <button
-            onClick={() => openModal(null, true, false)}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            Add Food Item
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => openModal(null, true, false)}
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Add Food Item
+            </button>
+            <Link href="/restock-report">
+              <button className="bg-green-500 text-white px-4 py-2 rounded">
+                Generate Restock Report
+              </button>
+            </Link>
+          </div>
         </div>
         <table className="min-w-full bg-white">
           <thead>

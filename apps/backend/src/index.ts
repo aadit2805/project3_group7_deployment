@@ -6,7 +6,6 @@ import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import apiRouter from './routes/api';
-import pool from './db';
 // Type declarations are automatically included from src/types/express.d.ts
 
 dotenv.config();

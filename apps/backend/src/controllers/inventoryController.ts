@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../db';
 
-export const getInventory = async (req: Request, res: Response) => {
+export const getInventory = async (_req: Request, res: Response) => {
   try {
     const inventory = await db.inventory.findMany({
       include: {
@@ -16,7 +16,7 @@ export const getInventory = async (req: Request, res: Response) => {
   }
 };
 
-export const getLowStock = async (req: Request, res: Response) => {
+export const getLowStock = async (_req: Request, res: Response) => {
   try {
     const food_inventory = await db.inventory.findMany({
       where: {
@@ -38,12 +38,42 @@ export const getLowStock = async (req: Request, res: Response) => {
   }
 };
 
+export const getRestockReport = async (_req: Request, res: Response) => {
+  try {
+    const lowFoodStock = await db.inventory.findMany({
+      where: {
+        stock: {
+          lt: 20,
+        },
+      },
+      include: {
+        menu_items: true,
+      },
+    });
+
+    const lowNonFoodStock = await db.non_food_inventory.findMany({
+      where: {
+        stock: {
+          lt: 80,
+        },
+      },
+    });
+
+    res.json({ food: lowFoodStock, non_food: lowNonFoodStock });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+};
+
 export const addInventoryItem = async (req: Request, res: Response) => {
   try {
     const { is_food, ...data } = req.body;
     if (is_food) {
       const { menu_item_id, stock, reorder, storage } = data;
-      const item = await db.inventory.create({ data: { menu_item_id, stock, reorder, storage } });
+      const maxId = await db.inventory.aggregate({ _max: { inventory_id: true } });
+      const newId = (maxId._max.inventory_id || 0) + 1;
+      const item = await db.inventory.create({ data: { inventory_id: newId, menu_item_id, stock, reorder, storage } });
       res.json(item);
     } else {
       const { name, stock, reorder } = data;
@@ -96,7 +126,7 @@ export const deleteInventoryItem = async (req: Request, res: Response) => {
   }
 };
 
-export const getMenuItems = async (req: Request, res: Response) => {
+export const getMenuItems = async (_req: Request, res: Response) => {
   try {
     const menuItems = await db.menu_items.findMany();
     res.json(menuItems);
