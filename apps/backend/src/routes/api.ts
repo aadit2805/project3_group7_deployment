@@ -95,7 +95,7 @@ router.get('/test-apis', async (_req: Request, res: Response) => {
   // Test translation
   try {
     const axios = require('axios');
-    const response = await axios.post(
+    await axios.post(
       'https://translation.googleapis.com/language/translate/v2',
       {},
       {
@@ -116,7 +116,7 @@ router.get('/test-apis', async (_req: Request, res: Response) => {
   // Test weather
   try {
     const axios = require('axios');
-    const response = await axios.get(
+    await axios.get(
       'https://api.openweathermap.org/data/2.5/weather',
       {
         params: {

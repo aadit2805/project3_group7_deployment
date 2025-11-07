@@ -264,13 +264,39 @@ app.post('/api/orders', async (req: Request, res: Response) => {
     await client.query(updateOrderPriceQuery, [totalPrice, orderId]);
     await client.query('COMMIT');
 
-    res.status(201).json({ message: 'Order submitted successfully', orderId });
+    return res.status(201).json({ message: 'Order submitted successfully', orderId });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Error submitting order:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   } finally {
     client.release();
+  }
+});
+
+// Meal types endpoints (for customer kiosk)
+app.get('/api/meal-types/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM meal_types WHERE meal_type_id = $1', [id]);
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
+    } else {
+      res.status(404).json({ error: 'Meal type not found' });
+    }
+  } catch (err) {
+    console.error('Error fetching meal type by ID:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/meal-types', async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query('SELECT * FROM meal_types');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching meal types:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

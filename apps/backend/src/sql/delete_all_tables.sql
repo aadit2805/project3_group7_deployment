@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS DailySummaries, Payment, Meal_Detail, Meal, "Order", Meal_Types, Non_Food_Inventory, Inventory, Menu_Items, Staff CASCADE;
