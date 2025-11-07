@@ -65,7 +65,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: `${process.env.AUTH_URL}/auth/google/callback`,
       },
-      async (_accessToken: string, _refreshToken: string, profile: any, done: (error: any, user?: any) => void) => {
+      async (
+        _accessToken: string,
+        _refreshToken: string,
+        profile: any,
+        done: (error: any, user?: any) => void
+      ) => {
         try {
           if (!profile.id) {
             return done(new Error('Google profile ID is missing'), null);
@@ -106,18 +111,20 @@ passport.serializeUser((user: Express.User, done: (err: any, id?: number) => voi
   done(null, user.id);
 });
 
-passport.deserializeUser(async (id: number, done: (err: any, user?: Express.User | null) => void) => {
-  try {
-    const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      return done(new Error('User not found'), null);
+passport.deserializeUser(
+  async (id: number, done: (err: any, user?: Express.User | null) => void) => {
+    try {
+      const user = await prisma.user.findUnique({ where: { id } });
+      if (!user) {
+        return done(new Error('User not found'), null);
+      }
+      done(null, user);
+    } catch (err) {
+      console.error('Error deserializing user:', err);
+      done(err, null);
     }
-    done(null, user);
-  } catch (err) {
-    console.error('Error deserializing user:', err);
-    done(err, null);
   }
-});
+);
 
 // --- AUTH MIDDLEWARE ---
 
@@ -264,6 +271,7 @@ app.get('/health', (_req: Request, res: Response) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
   });
+});
 app.get('/api/meal-types/:id', async (req, res) => {
   try {
     const { id } = req.params;
