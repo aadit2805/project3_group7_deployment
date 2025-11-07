@@ -161,6 +161,7 @@ export default function DashboardPage() {
             Logout
           </button>
         </div>
+        </div>
 
         <div className="mt-6 text-center">
           <Link href="/" className="text-blue-500 hover:underline text-sm">

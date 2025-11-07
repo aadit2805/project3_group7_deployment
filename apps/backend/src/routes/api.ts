@@ -10,7 +10,7 @@ import { ApiResponse } from '../types';
 import pool from '../config/db';
 import translationRoutes from './translation.routes';
 import weatherRoutes from './weather.routes';
-import { isAuthenticated, isManager } from '../index';
+import { isAuthenticated, isManager } from '../middleware/auth';
 
 const router = Router();
 

@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import apiRouter from './routes/api';
 import pool from './db';
+import { isAuthenticated } from './middleware/auth';
 // Type declarations are automatically included from src/types/express.d.ts
 
 dotenv.config();
@@ -122,30 +123,7 @@ passport.deserializeUser(
 );
 
 // --- AUTH MIDDLEWARE ---
-
-// Middleware to check if user is authenticated
-export const isAuthenticated = (req: Request, res: Response, next: NextFunction): void => {
-  if (req.isAuthenticated && req.isAuthenticated()) {
-    next();
-    return;
-  }
-  res.status(401).json({ message: 'Not authenticated' });
-};
-
-// Middleware to check if user is a manager
-export const isManager = (req: Request, res: Response, next: NextFunction): void => {
-  if (!req.isAuthenticated || !req.isAuthenticated()) {
-    res.status(401).json({ message: 'Not authenticated' });
-    return;
-  }
-  
-  if (!req.user || req.user.role !== 'MANAGER') {
-    res.status(403).json({ message: 'Access denied. Manager role required.' });
-    return;
-  }
-  
-  next();
-};
+// Authentication middleware is now in ./middleware/auth.ts
 
 // --- AUTH ROUTES ---
 
