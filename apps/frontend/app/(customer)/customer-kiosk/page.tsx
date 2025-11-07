@@ -56,7 +56,7 @@ const CustomerKioskContent = () => {
           const mealTypeData: MealType = await mealTypeRes.json();
           setSelectedMealType(mealTypeData);
 
-          const menuItemsRes = await fetch(`${backendUrl}/api/menu-items`);
+          const menuItemsRes = await fetch(`${backendUrl}/api/menu-items?is_available=true`);
           const menuItemsData: MenuItem[] = await menuItemsRes.json();
           setMenuItems(menuItemsData);
 

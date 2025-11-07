@@ -20,6 +20,9 @@ export default function Home() {
             <Link href="/customer-kiosk" className="text-blue-500 hover:underline block mb-2">
               Go to Customer Kiosk
             </Link>
+            <Link href="/inventory-manager" className="text-blue-500 hover:underline block mb-2">
+              Go to Inventory Manager
+            </Link>
             <Link href="/login" className="text-green-500 hover:underline block font-semibold">
               🔐 Test OAuth Login
             </Link>
