@@ -95,32 +95,46 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { is_food, ...data } = req.body;
+
     if (is_food) {
       const { name, stock, reorder, storage, menu_item_id } = data;
+
+      const parsedStock = Number(stock);
+      const parsedReorder = reorder === 'true' || reorder === 'on'; // Handle both boolean and string 'on'
+      const parsedMenuItemId = Number(menu_item_id);
+
+      if (isNaN(parsedMenuItemId) || parsedMenuItemId <= 0) {
+        return res.status(400).json({ error: 'Invalid menu_item_id provided for food item update.' });
+      }
 
       // Update the inventory item
       const inventoryItem = await db.inventory.update({
         where: { inventory_id: Number(id) },
-        data: { stock, reorder, storage },
+        data: { stock: parsedStock, reorder: parsedReorder, storage },
       });
 
       // Update the associated menu item's name
       const menuItem = await db.menu_items.update({
-        where: { menu_item_id: Number(menu_item_id) },
+        where: { menu_item_id: parsedMenuItemId },
         data: { name },
       });
 
-      res.json({ inventoryItem, menuItem });
+      return res.json({ inventoryItem, menuItem }); // Added return
     } else {
       const { name, stock, reorder } = data;
+
+      const parsedStock = Number(stock);
+      const parsedReorder = reorder === 'true' || reorder === 'on';
+
       const item = await db.non_food_inventory.update({
         where: { supply_id: Number(id) },
-        data: { name, stock, reorder },
+        data: { name, stock: parsedStock, reorder: parsedReorder },
       });
-      res.json(item);
+      return res.json(item); // Added return
     }
   } catch (error) {
-    res.status(500).json({ error: 'Something went wrong' });
+    console.error('Error updating inventory item:', error);
+    return res.status(500).json({ error: 'Something went wrong' }); // Added return
   }
 };
 

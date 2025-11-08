@@ -20,11 +20,19 @@ interface MenuItem {
 }
 
 // Get all menu items
-export const getMenuItems = async (_req: Request, res: Response): Promise<void> => {
+export const getMenuItems = async (req: Request, res: Response): Promise<void> => {
   try {
-    const result = await pool.query<MenuItem>(
-      'SELECT menu_item_id, name, upcharge, is_available, item_type FROM menu_items ORDER BY menu_item_id'
-    );
+    let query = 'SELECT menu_item_id, name, upcharge, is_available, item_type FROM menu_items';
+    const queryParams: (string | boolean)[] = [];
+
+    if (req.query.is_available === 'true') {
+      query += ' WHERE is_available = $1';
+      queryParams.push(true);
+    }
+
+    query += ' ORDER BY menu_item_id';
+
+    const result = await pool.query<MenuItem>(query, queryParams);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Error fetching menu items:', error);
@@ -116,5 +124,30 @@ export const getMenuItemsWithInventory = async (_req: Request, res: Response): P
       error: 'Failed to retrieve menu items with inventory',
       message: error instanceof Error ? error.message : 'Unknown error',
     });
+  }
+};
+
+export const getMealTypes = async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query('SELECT * FROM meal_types');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getMealTypeById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM meal_types WHERE meal_type_id = $1', [id]);
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
+    } else {
+      res.status(404).json({ error: 'Meal type not found' });
+    }
+  } catch (err) {
+    console.error('Error fetching meal type by ID:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
