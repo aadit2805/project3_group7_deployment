@@ -49,6 +49,7 @@ const ALaCartePage = () => {
   }
 
   const { order, setOrder } = context;
+  const itemCount = order.length;
 
   const handleAddItem = (item: MenuItem, sizeMealTypeId: number) => {
     const mealType = mealTypes.find((mt) => mt.meal_type_id === sizeMealTypeId);
@@ -83,7 +84,34 @@ const ALaCartePage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-center mb-8">A La Carte</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold">A La Carte</h1>
+        <Link
+          href="/shopping-cart"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
+        >
+          <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+            ></path>
+          </svg>
+          Shopping Cart
+          {itemCount > 0 && (
+            <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm">
+              {itemCount}
+            </span>
+          )}
+        </Link>
+      </div>
       <div className="mb-4">
         <Link
           href="/meal-type-selection"
