@@ -1,14 +1,5 @@
 import { Request, Response } from 'express';
-import { Pool } from 'pg';
-
-// Database connection pool
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'group_7_db',
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-});
+import pool from '../config/db';
 
 // TypeScript interface matching the database schema
 interface MenuItem {
