@@ -101,6 +101,12 @@ export default function ManagerPage() {
               >
                 User Dashboard
               </a>
+              <a
+                href="/kitchen-monitor"
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors font-semibold"
+              >
+                Kitchen Monitor
+              </a>
               <button
                 onClick={async () => {
                   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
