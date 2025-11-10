@@ -118,7 +118,30 @@ const CashierInterfaceContent = () => {
       setSelectedEntrees([]);
       setSelectedSides([]);
       setSelectedMealType(null);
-      router.push('/cashier-interface');
+    }
+  };
+
+  const handleSubmitOrder = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ order_items: order }),
+      });
+
+      if (response.ok) {
+        alert('Order submitted successfully!');
+        setOrder([]);
+        localStorage.removeItem('order');
+        router.push('/cashier-interface');
+      } else {
+        alert('Failed to submit order.');
+      }
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      alert('An error occurred while submitting the order.');
     }
   };
 
@@ -146,6 +169,15 @@ const CashierInterfaceContent = () => {
                 {mealType.drink_size && <p className="text-gray-700">Drink: {mealType.drink_size}</p>}
               </div>
             ))}
+          </div>
+          <div className="text-center mt-8">
+            <button
+              onClick={handleSubmitOrder}
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl"
+              disabled={order.length === 0}
+            >
+              Submit Order
+            </button>
           </div>
         </>
       ) : selectedMealType ? (

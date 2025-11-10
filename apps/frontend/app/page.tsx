@@ -5,7 +5,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-4xl rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800">
         <h1 className="mb-6 text-center text-4xl font-bold text-gray-800 dark:text-white">
-          Rev&apos;s American Grill Management System
+          Panda Express POS System
         </h1>
         <p className="mb-10 text-center text-lg text-gray-600 dark:text-gray-300">
           Select an interface to continue
