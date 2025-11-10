@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useContext, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 
 interface MenuItem {
@@ -22,7 +21,7 @@ interface MealType {
   drink_size: string;
 }
 
-const CustomerKioskContent = () => {
+const CashierInterfaceContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const mealTypeId = searchParams.get('mealTypeId');
@@ -31,7 +30,7 @@ const CustomerKioskContent = () => {
   const context = useContext(OrderContext);
 
   if (!context) {
-    throw new Error('CustomerKiosk must be used within an OrderProvider');
+    throw new Error('CashierInterface must be used within an OrderProvider');
   }
 
   const { order, setOrder } = context;
@@ -40,24 +39,31 @@ const CustomerKioskContent = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedEntrees, setSelectedEntrees] = useState<MenuItem[]>([]);
   const [selectedSides, setSelectedSides] = useState<MenuItem[]>([]);
-  const [selectedDrink, setSelectedDrink] = useState<MenuItem | undefined>(undefined);
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
 
   useEffect(() => {
-    if (!mealTypeId) {
-      router.push('/meal-type-selection');
-    }
-  }, [mealTypeId, router]);
+    const fetchMealTypes = async () => {
+      try {
+        const res = await fetch('http://localhost:3001/api/meal-types');
+        const data = await res.json();
+        setMealTypes(data);
+      } catch (error) {
+        console.error('Error fetching meal types:', error);
+      }
+    };
+
+    fetchMealTypes();
+  }, []);
 
   useEffect(() => {
     if (mealTypeId) {
       const fetchMealTypeAndMenuItems = async () => {
         try {
-          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-          const mealTypeRes = await fetch(`${backendUrl}/api/meal-types/${mealTypeId}`);
+          const mealTypeRes = await fetch(`http://localhost:3001/api/meal-types/${mealTypeId}`);
           const mealTypeData: MealType = await mealTypeRes.json();
           setSelectedMealType(mealTypeData);
 
-          const menuItemsRes = await fetch(`${backendUrl}/api/menu-items?is_available=true`);
+          const menuItemsRes = await fetch(`http://localhost:3001/api/menu-items`);
           const menuItemsData: MenuItem[] = await menuItemsRes.json();
           setMenuItems(menuItemsData);
 
@@ -66,7 +72,6 @@ const CustomerKioskContent = () => {
             if (order[index] && order[index].mealType.meal_type_id === parseInt(mealTypeId, 10)) {
               setSelectedEntrees(order[index].entrees);
               setSelectedSides(order[index].sides);
-              setSelectedDrink(order[index].drink);
             }
           }
         } catch (error) {
@@ -78,7 +83,7 @@ const CustomerKioskContent = () => {
     }
   }, [mealTypeId, editIndex, order]);
 
-  const handleSelectItem = (item: MenuItem, type: 'entree' | 'side' | 'drink') => {
+  const handleSelectItem = (item: MenuItem, type: 'entree' | 'side') => {
     if (type === 'entree') {
       if (selectedEntrees.some((e) => e.menu_item_id === item.menu_item_id)) {
         setSelectedEntrees(selectedEntrees.filter((e) => e.menu_item_id !== item.menu_item_id));
@@ -91,8 +96,6 @@ const CustomerKioskContent = () => {
       } else if (selectedMealType && selectedSides.length < selectedMealType.side_count) {
         setSelectedSides([...selectedSides, item]);
       }
-    } else if (type === 'drink') {
-      setSelectedDrink(item);
     }
   };
 
@@ -102,7 +105,6 @@ const CustomerKioskContent = () => {
         mealType: selectedMealType,
         entrees: selectedEntrees,
         sides: selectedSides,
-        drink: selectedDrink,
       };
 
       const newOrder = [...order];
@@ -115,47 +117,87 @@ const CustomerKioskContent = () => {
       setOrder(newOrder);
       setSelectedEntrees([]);
       setSelectedSides([]);
-      setSelectedDrink(undefined);
-      router.push('/meal-type-selection');
+      setSelectedMealType(null);
     }
   };
 
-  const itemCount = order.length;
+  const handleSubmitOrder = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ order_items: order }),
+      });
+
+      if (response.ok) {
+        alert('Order submitted successfully!');
+        setOrder([]);
+        localStorage.removeItem('order');
+        router.push('/cashier-interface');
+      } else {
+        alert('Failed to submit order.');
+      }
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      alert('An error occurred while submitting the order.');
+    }
+  };
+
+  const handleSelectMealType = (mealType: MealType) => {
+    setSelectedMealType(mealType);
+    router.push(`/cashier-interface?mealTypeId=${mealType.meal_type_id}`);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {selectedMealType && (
+      {!mealTypeId ? (
         <>
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold">
-              Customize Your {selectedMealType.meal_type_name}
-            </h1>
-            <Link
-              href="/shopping-cart"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
-            >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+          <h1 className="text-4xl font-bold text-center mb-8">Cashier Interface - Select Meal Type</h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {mealTypes.map((mealType) => (
+              <div
+                key={mealType.meal_type_id}
+                onClick={() => handleSelectMealType(mealType)}
+                className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
-              Shopping Cart
-              {itemCount > 0 && (
-                <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
+                <h2 className="text-2xl font-bold mb-2">{mealType.meal_type_name}</h2>
+                <p className="text-gray-700">Price: ${mealType.meal_type_price.toFixed(2)}</p>
+                <p className="text-gray-700">Entrees: {mealType.entree_count}</p>
+                <p className="text-gray-700">Sides: {mealType.side_count}</p>
+                {mealType.drink_size && <p className="text-gray-700">Drink: {mealType.drink_size}</p>}
+              </div>
+            ))}
           </div>
+          <div className="text-center mt-8">
+            <button
+              onClick={handleSubmitOrder}
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl"
+              disabled={order.length === 0}
+            >
+              Submit Order
+            </button>
+          </div>
+        </>
+      ) : selectedMealType ? (
+        <>
+          <div className="mb-6">
+            <button
+              onClick={() => {
+                setSelectedMealType(null);
+                setSelectedEntrees([]);
+                setSelectedSides([]);
+                router.push('/cashier-interface');
+              }}
+              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg"
+            >
+              ← Back to Meal Types
+            </button>
+          </div>
+          <h1 className="text-4xl font-bold text-center mb-8">
+            Cashier Interface - Customize {selectedMealType.meal_type_name}
+          </h1>
 
           <section className="mb-10">
             <h2 className="text-3xl font-semibold mb-4">
@@ -167,11 +209,18 @@ const CustomerKioskContent = () => {
                 .map((item) => (
                   <div
                     key={item.menu_item_id}
-                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${selectedEntrees.some((e) => e.menu_item_id === item.menu_item_id) ? 'border-blue-500' : 'border-gray-200'}`}
-                    onClick={() => handleSelectItem(item, 'entree')}
+                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${
+                      selectedEntrees.some((e) => e.menu_item_id === item.menu_item_id)
+                        ? 'border-blue-500'
+                        : 'border-gray-200'
+                    } ${!item.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => item.is_available && handleSelectItem(item, 'entree')}
                   >
                     <h3 className="text-xl font-bold mb-2">{item.name}</h3>
                     <p className="text-gray-700">Upcharge: ${item.upcharge.toFixed(2)}</p>
+                    {!item.is_available && (
+                      <p className="text-red-500 font-semibold mt-2">Unavailable</p>
+                    )}
                   </div>
                 ))}
             </div>
@@ -187,34 +236,22 @@ const CustomerKioskContent = () => {
                 .map((item) => (
                   <div
                     key={item.menu_item_id}
-                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${selectedSides.some((s) => s.menu_item_id === item.menu_item_id) ? 'border-blue-500' : 'border-gray-200'}`}
-                    onClick={() => handleSelectItem(item, 'side')}
+                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${
+                      selectedSides.some((s) => s.menu_item_id === item.menu_item_id)
+                        ? 'border-blue-500'
+                        : 'border-gray-200'
+                    } ${!item.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => item.is_available && handleSelectItem(item, 'side')}
                   >
                     <h3 className="text-xl font-bold mb-2">{item.name}</h3>
                     <p className="text-gray-700">Upcharge: ${item.upcharge.toFixed(2)}</p>
+                    {!item.is_available && (
+                      <p className="text-red-500 font-semibold mt-2">Unavailable</p>
+                    )}
                   </div>
                 ))}
             </div>
           </section>
-
-          {selectedMealType.drink_size !== 'none' && (
-            <section className="mb-10">
-              <h2 className="text-3xl font-semibold mb-4">Select Drink (1)</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {menuItems
-                  .filter((item) => item.item_type === 'drink')
-                  .map((item) => (
-                    <div
-                      key={item.menu_item_id}
-                      className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${selectedDrink?.menu_item_id === item.menu_item_id ? 'border-blue-500' : 'border-gray-200'}`}
-                      onClick={() => handleSelectItem(item, 'drink')}
-                    >
-                      <h3 className="text-xl font-bold mb-2">{item.name}</h3>
-                    </div>
-                  ))}
-              </div>
-            </section>
-          )}
 
           <div className="text-center mb-8">
             <button
@@ -223,25 +260,28 @@ const CustomerKioskContent = () => {
               disabled={
                 selectedMealType &&
                 (selectedEntrees.length !== selectedMealType.entree_count ||
-                  selectedSides.length !== selectedMealType.side_count ||
-                  (selectedMealType.drink_size !== 'none' && !selectedDrink))
+                  selectedSides.length !== selectedMealType.side_count)
               }
             >
               {editIndex !== null ? 'Update Item' : 'Add to Order'}
             </button>
           </div>
         </>
+      ) : (
+        <div className="text-center py-10">
+          <h1 className="text-3xl font-bold">Loading meal type...</h1>
+        </div>
       )}
     </div>
   );
 };
 
-const CustomerKiosk = () => {
+const CashierInterface = () => {
   return (
     <Suspense fallback={<div className="container mx-auto px-4 py-8 text-center">Loading...</div>}>
-      <CustomerKioskContent />
+      <CashierInterfaceContent />
     </Suspense>
   );
 };
 
-export default CustomerKiosk;
+export default CashierInterface;

@@ -2,29 +2,45 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-center font-mono text-sm">
-        <h1 className="text-4xl font-bold text-center mb-8">Welcome to Project 3 - Group 7</h1>
-        <p className="text-center text-lg mb-4">Next.js 15 + TypeScript Frontend</p>
-        <div className="mt-8 p-6 bg-gray-100 dark:bg-gray-800 rounded-lg">
-          <h2 className="text-2xl font-semibold mb-4">Features:</h2>
-          <ul className="list-disc list-inside space-y-2">
-            <li>Next.js 15 with App Router</li>
-            <li>TypeScript for type safety</li>
-            <li>Tailwind CSS for styling</li>
-            <li>ESLint for code quality</li>
-          </ul>
-        </div>
-        <div className="mt-8 text-center space-y-4">
-          <div>
-            <Link href="/customer-kiosk" className="text-blue-500 hover:underline block mb-2">
+    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-50">
+      <div className="w-full max-w-4xl rounded-lg bg-white p-8 shadow-lg">
+        <h1 className="mb-6 text-center text-4xl font-bold text-gray-800">
+          Panda Express POS System
+        </h1>
+        <p className="mb-10 text-center text-lg text-gray-600">
+          Select an interface to continue
+        </p>
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {/* Public Access Section */}
+          <div className="rounded-lg border border-gray-200 p-6">
+            <h2 className="mb-4 text-2xl font-semibold text-gray-700">
+              Public Access
+            </h2>
+            <p className="mb-6 text-gray-500">
+              For customers to place their orders.
+            </p>
+            <Link
+              href="/customer-kiosk"
+              className="block w-full rounded-md bg-blue-600 px-4 py-3 text-center font-semibold text-white transition hover:bg-blue-700"
+            >
               Go to Customer Kiosk
             </Link>
-            <Link href="/inventory-manager" className="text-blue-500 hover:underline block mb-2">
-              Go to Inventory Manager
-            </Link>
-            <Link href="/login" className="text-green-500 hover:underline block font-semibold">
-              🔐 Test OAuth Login
+          </div>
+
+          {/* Employee Access Section */}
+          <div className="rounded-lg border border-gray-200 p-6">
+            <h2 className="mb-4 text-2xl font-semibold text-gray-700">
+              Employee Access
+            </h2>
+            <p className="mb-6 text-gray-500">
+              Login required for employee roles.
+            </p>
+            <Link
+              href="/dashboard"
+              className="block w-full rounded-md bg-green-600 px-4 py-3 text-center font-semibold text-white transition hover:bg-green-700"
+            >
+              Go to Employee Dashboard
             </Link>
           </div>
         </div>

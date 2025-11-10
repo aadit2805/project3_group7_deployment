@@ -4,7 +4,7 @@ import React, { useContext } from 'react';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useRouter } from 'next/navigation';
 
-const OrderPane = () => {
+const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void }) => {
   const context = useContext(OrderContext);
   const router = useRouter();
 
@@ -37,12 +37,25 @@ const OrderPane = () => {
         body: JSON.stringify({ order_items: order }),
       });
 
-      if (response.ok) {
-        alert('Order submitted successfully!');
-        setOrder([]);
-        localStorage.removeItem('order');
-        router.push('/meal-type-selection');
-      } else {
+              if (response.ok) {
+
+                alert('Order submitted successfully!');
+
+                setOrder([]);
+
+                localStorage.removeItem('order');
+
+                if (onOrderSubmitSuccess) {
+
+                  onOrderSubmitSuccess();
+
+                } else {
+
+                  router.push('/meal-type-selection');
+
+                }
+
+              } else {
         alert('Failed to submit order.');
       }
     } catch (error) {

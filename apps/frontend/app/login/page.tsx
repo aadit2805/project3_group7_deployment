@@ -29,12 +29,17 @@ function LoginContent() {
     }
   };
 
+  const handleMockLogin = () => {
+    localStorage.setItem('authToken', 'mock-auth-token');
+    router.push('/dashboard');
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="z-10 max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-50">
+      <div className="z-10 max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
         {error && (
-          <div className="mb-4 p-4 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-300 rounded">
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
           </div>
         )}
@@ -66,7 +71,15 @@ function LoginContent() {
             <span className="text-gray-700 font-medium">Sign in with Google</span>
           </button>
 
-          <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <button
+            onClick={handleMockLogin}
+            type="button"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm"
+          >
+            Mock Login (for testing)
+          </button>
+
+          <div className="text-center text-sm text-gray-600">
             <p>Click the button above to authenticate with Google OAuth</p>
           </div>
         </div>
@@ -86,7 +99,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen flex-col items-center justify-center p-24">
+        <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-50">
           <div className="text-center">Loading...</div>
         </main>
       }
