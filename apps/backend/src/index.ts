@@ -65,7 +65,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: `${process.env.AUTH_URL}/auth/google/callback`,
       },
-      async (_accessToken: string, _refreshToken: string, profile: any, done: (error: any, user?: any) => void) => {
+      async (
+        _accessToken: string,
+        _refreshToken: string,
+        profile: any,
+        done: (error: any, user?: any) => void
+      ) => {
         try {
           if (!profile.id) {
             return done(new Error('Google profile ID is missing'), null);

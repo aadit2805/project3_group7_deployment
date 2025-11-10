@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import AddMenuItemForm from './components/AddMenuItemForm';
 import MenuItemsList from './components/MenuItemsList';
 import ActiveOrdersList from './components/ActiveOrdersList';
@@ -84,6 +85,13 @@ export default function ManagerPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
+      <div className="mb-4">
+        <Link href="/dashboard">
+          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+            ← Back to Dashboard
+          </button>
+        </Link>
+      </div>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">

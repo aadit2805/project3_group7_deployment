@@ -103,4 +103,3 @@ export const getForecast = async (city: string, days: number = 5) => {
     };
   }
 };
-

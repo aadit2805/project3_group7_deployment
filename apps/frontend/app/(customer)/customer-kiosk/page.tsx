@@ -124,6 +124,13 @@ const CustomerKioskContent = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-4">
+        <Link href="/meal-type-selection">
+          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+            ← Back to Meal Type Selection
+          </button>
+        </Link>
+      </div>
       {selectedMealType && (
         <>
           <div className="flex justify-between items-center mb-8">

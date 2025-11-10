@@ -1,5 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { getCurrentWeather, getWeatherByCoordinates, getForecast } from '../services/weather.service';
+import {
+  getCurrentWeather,
+  getWeatherByCoordinates,
+  getForecast,
+} from '../services/weather.service';
 
 const router = Router();
 
@@ -14,7 +18,7 @@ router.get('/current', async (req: Request, res: Response) => {
   }
 
   const result = await getCurrentWeather(city);
-  
+
   if (result.success) {
     return res.json(result);
   } else {
@@ -42,7 +46,7 @@ router.get('/coordinates', async (req: Request, res: Response) => {
   }
 
   const result = await getWeatherByCoordinates(latitude, longitude);
-  
+
   if (result.success) {
     return res.json(result);
   } else {
@@ -63,7 +67,7 @@ router.get('/forecast', async (req: Request, res: Response) => {
   const numDays = days ? parseInt(days as string) : 5;
 
   const result = await getForecast(city, numDays);
-  
+
   if (result.success) {
     return res.json(result);
   } else {
@@ -72,4 +76,3 @@ router.get('/forecast', async (req: Request, res: Response) => {
 });
 
 export default router;
-

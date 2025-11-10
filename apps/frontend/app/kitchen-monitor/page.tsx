@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface OrderItem {
   name: string;
@@ -108,6 +109,13 @@ export default function KitchenMonitor() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
+      <div className="mb-4">
+        <Link href="/dashboard">
+          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+            ← Back to Dashboard
+          </button>
+        </Link>
+      </div>
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">Kitchen Monitor</h1>
@@ -176,15 +184,7 @@ export default function KitchenMonitor() {
         )}
       </div>
 
-      {/* Return to Manager Button */}
-      <div className="mt-6 flex justify-center">
-        <button
-          onClick={() => router.push('/manager')}
-          className="bg-gray-700 hover:bg-gray-800 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-        >
-          Return to Manager Dashboard
-        </button>
-      </div>
+
     </div>
   );
 }

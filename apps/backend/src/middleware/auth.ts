@@ -15,12 +15,11 @@ export const isManager = (req: Request, res: Response, next: NextFunction): void
     res.status(401).json({ message: 'Not authenticated' });
     return;
   }
-  
+
   if (!req.user || req.user.role !== 'MANAGER') {
     res.status(403).json({ message: 'Access denied. Manager role required.' });
     return;
   }
-  
+
   next();
 };
-

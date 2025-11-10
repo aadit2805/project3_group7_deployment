@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useContext, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 
 interface MenuItem {
@@ -154,6 +155,13 @@ const CashierInterfaceContent = () => {
     <div className="container mx-auto px-4 py-8">
       {!mealTypeId ? (
         <>
+          <div className="mb-4">
+            <Link href="/dashboard">
+              <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+                ← Back to Dashboard
+              </button>
+            </Link>
+          </div>
           <h1 className="text-4xl font-bold text-center mb-8">Cashier Interface - Select Meal Type</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {mealTypes.map((mealType) => (

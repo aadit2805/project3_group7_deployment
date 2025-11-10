@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 const RestockReport = () => {
   const [foodItems, setFoodItems] = useState([]);
@@ -38,6 +39,13 @@ const RestockReport = () => {
 
   return (
     <div className="container mx-auto p-4">
+      <div className="mb-4">
+        <Link href="/dashboard">
+          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+            ← Back to Dashboard
+          </button>
+        </Link>
+      </div>
       <h1 className="text-2xl font-bold mb-4">Restock Report</h1>
 
       <div className="mb-8">

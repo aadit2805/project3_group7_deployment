@@ -29,10 +29,7 @@ function LoginContent() {
     }
   };
 
-  const handleMockLogin = () => {
-    localStorage.setItem('authToken', 'mock-auth-token');
-    router.push('/dashboard');
-  };
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-50">
@@ -71,13 +68,7 @@ function LoginContent() {
             <span className="text-gray-700 font-medium">Sign in with Google</span>
           </button>
 
-          <button
-            onClick={handleMockLogin}
-            type="button"
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm"
-          >
-            Mock Login (for testing)
-          </button>
+
 
           <div className="text-center text-sm text-gray-600">
             <p>Click the button above to authenticate with Google OAuth</p>
