@@ -15,7 +15,9 @@ export const createOrder = async (req: Request, res: Response) => {
 
     // Fetch all menu items and meal types for price lookup
     const menuItemsResult = await client.query('SELECT menu_item_id, upcharge FROM menu_items');
-    const menuItemsMap = new Map(menuItemsResult.rows.map((item) => [item.menu_item_id, item.upcharge]));
+    const menuItemsMap = new Map(
+      menuItemsResult.rows.map((item) => [item.menu_item_id, item.upcharge])
+    );
 
     const mealTypesResult = await client.query(
       'SELECT meal_type_id, meal_type_price FROM meal_types'
@@ -96,7 +98,7 @@ export const createOrder = async (req: Request, res: Response) => {
   }
 };
 
-export const getActiveOrders = async (req: Request, res: Response) => {
+export const getActiveOrders = async (_req: Request, res: Response) => {
   const client = await pool.connect();
 
   try {
@@ -120,20 +122,177 @@ export const getActiveOrders = async (req: Request, res: Response) => {
       ORDER BY o.datetime DESC NULLS LAST, o.order_id DESC`
     );
 
-    return res.status(200).json({ 
-      success: true, 
-      data: result.rows.map(row => ({
+    return res.status(200).json({
+      success: true,
+      data: result.rows.map((row) => ({
         order_id: row.order_id,
         staff_id: row.staff_id,
         staff_username: row.staff_username,
         datetime: row.datetime,
         price: row.price ? parseFloat(row.price) : 0,
         order_status: row.order_status || 'pending',
-        meal_count: parseInt(row.meal_count) || 0
-      }))
+        meal_count: parseInt(row.meal_count) || 0,
+      })),
     });
   } catch (error) {
     console.error('Error fetching active orders:', error);
+    return res.status(500).json({ success: false, error: (error as Error).message });
+  } finally {
+    client.release();
+  }
+};
+
+export const getKitchenOrders = async (_req: Request, res: Response) => {
+  const client = await pool.connect();
+
+  try {
+    // Get all orders that are not completed or cancelled, with full details
+    const ordersResult = await client.query(
+      `SELECT 
+        o.order_id,
+        o.customer_name,
+        o.datetime,
+        o.order_status,
+        s.username as staff_username
+      FROM "Order" o
+      LEFT JOIN staff s ON o.staff_id = s.staff_id
+      WHERE (o.order_status IS NULL OR o.order_status NOT IN ('completed', 'cancelled'))
+      ORDER BY o.datetime ASC NULLS FIRST, o.order_id ASC`
+    );
+
+    const orders = [];
+
+    for (const orderRow of ordersResult.rows) {
+      // Get all meals for this order
+      const mealsResult = await client.query(
+        `SELECT 
+          m.meal_id,
+          mt.meal_type_name,
+          mt.meal_type_id
+        FROM meal m
+        LEFT JOIN meal_types mt ON m.meal_type_id = mt.meal_type_id
+        WHERE m.order_id = $1`,
+        [orderRow.order_id]
+      );
+
+      const meals = [];
+
+      for (const mealRow of mealsResult.rows) {
+        // Get all items for this meal
+        const itemsResult = await client.query(
+          `SELECT 
+            md.role,
+            mi.name,
+            mi.menu_item_id
+          FROM meal_detail md
+          LEFT JOIN menu_items mi ON md.menu_item_id = mi.menu_item_id
+          WHERE md.meal_id = $1
+          ORDER BY md.role, mi.name`,
+          [mealRow.meal_id]
+        );
+
+        meals.push({
+          meal_id: mealRow.meal_id,
+          meal_type_name: mealRow.meal_type_name,
+          items: itemsResult.rows.map((item) => ({
+            name: item.name,
+            role: item.role,
+          })),
+        });
+      }
+
+      orders.push({
+        order_id: orderRow.order_id,
+        customer_name: orderRow.customer_name || 'Guest',
+        datetime: orderRow.datetime,
+        order_status: orderRow.order_status || 'pending',
+        staff_username: orderRow.staff_username,
+        meals,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: orders,
+    });
+  } catch (error) {
+    console.error('Error fetching kitchen orders:', error);
+    return res.status(500).json({ success: false, error: (error as Error).message });
+  } finally {
+    client.release();
+  }
+};
+
+export const updateOrderStatus = async (req: Request, res: Response) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ success: false, error: 'Status is required' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // Update order status
+    const result = await client.query(
+      'UPDATE "Order" SET order_status = $1 WHERE order_id = $2 RETURNING *',
+      [status, orderId]
+    );
+
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    // If marking as completed, decrement inventory
+    if (status === 'completed') {
+      // Get all menu items from this order
+      const menuItemsResult = await client.query(
+        `SELECT md.menu_item_id, COUNT(*) as quantity
+         FROM meal m
+         JOIN meal_detail md ON m.meal_id = md.meal_id
+         WHERE m.order_id = $1 AND md.menu_item_id IS NOT NULL
+         GROUP BY md.menu_item_id`,
+        [orderId]
+      );
+
+      // Decrement inventory for each menu item
+      for (const item of menuItemsResult.rows) {
+        const menuItemId = item.menu_item_id;
+        const quantity = parseInt(item.quantity);
+
+        // Update inventory stock (decrement by quantity used)
+        await client.query(
+          `UPDATE inventory 
+           SET stock = stock - $1 
+           WHERE menu_item_id = $2 AND stock >= $1`,
+          [quantity, menuItemId]
+        );
+
+        await client.query(
+          `UPDATE inventory 
+           SET reorder = true 
+           WHERE menu_item_id = $1 AND stock < 10`,
+          [menuItemId]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        order_id: result.rows[0].order_id,
+        order_status: result.rows[0].order_status,
+      },
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error updating order status:', error);
     return res.status(500).json({ success: false, error: (error as Error).message });
   } finally {
     client.release();
