@@ -5,15 +5,21 @@ import {
   updateMenuItem,
   deleteMenuItem,
   getMealTypes,
-  getMealTypeById
+  getMealTypeById,
 } from '../controllers/menuController';
-import { createOrder, getActiveOrders } from '../controllers/orderController';
+import {
+  createOrder,
+  getActiveOrders,
+  getKitchenOrders,
+  updateOrderStatus,
+} from '../controllers/orderController';
 import { ApiResponse } from '../types';
 import pool from '../config/db';
 import translationRoutes from './translation.routes';
 import weatherRoutes from './weather.routes';
 import inventoryRoutes from './inventory.routes';
 import { isAuthenticated, isManager } from '../middleware/auth';
+import axios from 'axios';
 
 const router = Router();
 
@@ -33,6 +39,12 @@ router.post('/orders', createOrder);
 
 // GET /api/orders/active - Get all active orders (manager only)
 router.get('/orders/active', isAuthenticated, isManager, getActiveOrders);
+
+// GET /api/orders/kitchen - Get detailed orders for kitchen monitor (manager only)
+router.get('/orders/kitchen', isAuthenticated, isManager, getKitchenOrders);
+
+// PATCH /api/orders/:orderId/status - Update order status (manager only)
+router.patch('/orders/:orderId/status', isAuthenticated, isManager, updateOrderStatus);
 
 // Meal Type routes
 router.get('/meal-types', getMealTypes);
@@ -107,7 +119,6 @@ router.get('/test-apis', async (_req: Request, res: Response) => {
 
   // Test translation
   try {
-    const axios = require('axios');
     await axios.post(
       'https://translation.googleapis.com/language/translate/v2',
       {},
@@ -121,23 +132,23 @@ router.get('/test-apis', async (_req: Request, res: Response) => {
     );
     results.translation.status = 'connected ✅';
   } catch (error: unknown) {
-    const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+    const err = error as {
+      response?: { data?: { error?: { message?: string } } };
+      message?: string;
+    };
     results.translation.status = 'failed ❌';
-    results.translation.error = err.response?.data?.error?.message || err.message || 'Unknown error';
+    results.translation.error =
+      err.response?.data?.error?.message || err.message || 'Unknown error';
   }
 
   // Test weather
   try {
-    const axios = require('axios');
-    await axios.get(
-      'https://api.openweathermap.org/data/2.5/weather',
-      {
-        params: {
-          q: 'London',
-          appid: process.env.OPENWEATHER_API_KEY,
-        },
-      }
-    );
+    await axios.get('https://api.openweathermap.org/data/2.5/weather', {
+      params: {
+        q: 'London',
+        appid: process.env.OPENWEATHER_API_KEY,
+      },
+    });
     results.weather.status = 'connected ✅';
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } }; message?: string };
