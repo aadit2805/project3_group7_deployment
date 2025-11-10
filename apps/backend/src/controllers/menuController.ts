@@ -121,13 +121,13 @@ export const getMenuItemsWithInventory = async (_req: Request, res: Response): P
 // Create a new menu item
 export const createMenuItem = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, upcharge, is_available, item_type, menu_item_id } = req.body;
+    const { name, upcharge, is_available, item_type, menu_item_id, stock, reorder, storage } = req.body;
 
     // Validation
-    if (!name || !item_type) {
+    if (!name || !item_type || stock === undefined || reorder === undefined || !storage) {
       res.status(400).json({
         error: 'Missing required fields',
-        message: 'Name and item_type are required',
+        message: 'Name, item_type, stock, reorder, and storage are required',
       });
       return;
     }
@@ -178,10 +178,30 @@ export const createMenuItem = async (req: Request, res: Response): Promise<void>
       ]
     );
 
+    const newMenuItem = result.rows[0];
+
+    // Create corresponding entry in inventory table
+    const maxInventoryIdResult = await pool.query(
+      'SELECT COALESCE(MAX(inventory_id), 0) + 1 as next_id FROM inventory'
+    );
+    const newInventoryId = maxInventoryIdResult.rows[0].next_id;
+
+    await pool.query(
+      `INSERT INTO inventory (inventory_id, menu_item_id, stock, reorder, storage)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        newInventoryId,
+        newMenuItem.menu_item_id,
+        stock,
+        reorder,
+        storage,
+      ]
+    );
+
     res.status(201).json({
       success: true,
-      message: 'Menu item created successfully',
-      data: result.rows[0],
+      message: 'Menu item and inventory item created successfully',
+      data: newMenuItem,
     });
   } catch (error) {
     console.error('Error creating menu item:', error);
@@ -264,13 +284,13 @@ export const updateMenuItem = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// Delete a menu item
-export const deleteMenuItem = async (req: Request, res: Response): Promise<void> => {
+// Deactivate a menu item (set is_available to false)
+export const deactivateMenuItem = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
     const result = await pool.query(
-      'DELETE FROM menu_items WHERE menu_item_id = $1 RETURNING menu_item_id',
+      'UPDATE menu_items SET is_available = false WHERE menu_item_id = $1 RETURNING menu_item_id, is_available',
       [id]
     );
 
@@ -281,12 +301,13 @@ export const deleteMenuItem = async (req: Request, res: Response): Promise<void>
 
     res.status(200).json({
       success: true,
-      message: 'Menu item deleted successfully',
+      message: 'Menu item deactivated successfully',
+      data: result.rows[0],
     });
   } catch (error) {
-    console.error('Error deleting menu item:', error);
+    console.error('Error deactivating menu item:', error);
     res.status(500).json({
-      error: 'Failed to delete menu item',
+      error: 'Failed to deactivate menu item',
       message: error instanceof Error ? error.message : 'Unknown error',
     });
   }

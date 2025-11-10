@@ -41,28 +41,7 @@ export default function MenuItemsList() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm(`Are you sure you want to delete menu item #${id}?`)) {
-      return;
-    }
 
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/api/menu-items/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete menu item');
-      }
-
-      // Refresh the list
-      fetchMenuItems();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete menu item');
-    }
-  };
 
   const handleEdit = (item: MenuItem) => {
     setEditingId(item.menu_item_id);
@@ -278,12 +257,6 @@ export default function MenuItemsList() {
                           className="text-blue-600 hover:text-blue-900"
                         >
                           Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.menu_item_id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
                         </button>
                       </div>
                     )}

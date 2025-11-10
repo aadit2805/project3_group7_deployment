@@ -21,6 +21,9 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
     is_available: true,
     item_type: 'entree',
     menu_item_id: '',
+    stock: '0',
+    reorder: false,
+    storage: 'pantry',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +42,9 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
         upcharge: parseFloat(formData.upcharge) || 0,
         is_available: formData.is_available,
         item_type: formData.item_type,
+        stock: parseInt(formData.stock),
+        reorder: formData.reorder,
+        storage: formData.storage,
       };
 
       // Only include menu_item_id if provided
@@ -69,6 +75,9 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
         is_available: true,
         item_type: 'entree',
         menu_item_id: '',
+        stock: '0',
+        reorder: false,
+        storage: 'pantry',
       });
 
       // Call onSuccess callback after a short delay
@@ -182,6 +191,51 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
           </label>
         </div>
 
+        <div>
+          <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
+            Stock <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            id="stock"
+            required
+            min="0"
+            value={formData.stock}
+            onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="e.g., 100"
+          />
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="reorder"
+            checked={formData.reorder}
+            onChange={(e) => setFormData({ ...formData, reorder: e.target.checked })}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="reorder" className="ml-2 block text-sm text-gray-700">
+            Reorder when low stock
+          </label>
+        </div>
+
+        <div>
+          <label htmlFor="storage" className="block text-sm font-medium text-gray-700 mb-2">
+            Storage Location <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="storage"
+            required
+            value={formData.storage}
+            onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="pantry">Pantry</option>
+            <option value="fridge">Fridge</option>
+          </select>
+        </div>
+
         <div className="flex gap-4">
           <button
             type="submit"
@@ -199,6 +253,9 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
                 is_available: true,
                 item_type: 'entree',
                 menu_item_id: '',
+                stock: '0',
+                reorder: false,
+                storage: 'pantry',
               });
               setError(null);
             }}

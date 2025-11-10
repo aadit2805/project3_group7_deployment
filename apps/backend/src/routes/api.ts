@@ -3,7 +3,7 @@ import {
   getMenuItems,
   createMenuItem,
   updateMenuItem,
-  deleteMenuItem,
+  deactivateMenuItem,
   getMealTypes,
   getMealTypeById,
 } from '../controllers/menuController';
@@ -32,7 +32,7 @@ router.get('/menu-items', getMenuItems);
 // Manager-only routes for menu items
 router.post('/menu-items', isAuthenticated, isManager, createMenuItem);
 router.put('/menu-items/:id', isAuthenticated, isManager, updateMenuItem);
-router.delete('/menu-items/:id', isAuthenticated, isManager, deleteMenuItem);
+router.put('/menu-items/:id/deactivate', isAuthenticated, isManager, deactivateMenuItem);
 
 // POST /api/orders
 router.post('/orders', createOrder);
