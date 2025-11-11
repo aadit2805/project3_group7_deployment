@@ -119,6 +119,7 @@ const CashierInterfaceContent = () => {
       setSelectedEntrees([]);
       setSelectedSides([]);
       setSelectedMealType(null);
+      router.push('/cashier-interface');
     }
   };
 

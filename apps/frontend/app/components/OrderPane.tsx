@@ -17,7 +17,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
   const handleEditItem = (index: number) => {
     const itemToEdit = order[index];
     router.push(
-      `/customer-kiosk?mealTypeId=${itemToEdit.mealType.meal_type_id}&editIndex=${index}`
+      `/cashier-interface?mealTypeId=${itemToEdit.mealType.meal_type_id}&editIndex=${index}`
     );
   };
 
