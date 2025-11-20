@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AddMenuItemForm from './components/AddMenuItemForm';
-import MenuItemsList from './components/MenuItemsList';
+import FilterableMenuItems from './components/FilterableMenuItems';
 import ActiveOrdersList from './components/ActiveOrdersList';
 
 interface User {
@@ -177,7 +177,7 @@ export default function ManagerPage() {
           ) : activeTab === 'add' ? (
             <AddMenuItemForm onSuccess={() => setActiveTab('list')} />
           ) : (
-            <MenuItemsList />
+            <FilterableMenuItems />
           )}
         </div>
       </div>

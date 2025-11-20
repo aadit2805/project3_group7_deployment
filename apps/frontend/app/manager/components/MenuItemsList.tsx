@@ -10,7 +10,11 @@ interface MenuItem {
   item_type: string;
 }
 
-export default function MenuItemsList() {
+interface MenuItemsListProps {
+  filter: string | null;
+}
+
+export default function MenuItemsList({ filter }: MenuItemsListProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +109,10 @@ export default function MenuItemsList() {
     }
   };
 
+  const filteredMenuItems = filter
+    ? menuItems.filter((item) => item.item_type === filter)
+    : menuItems;
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -134,9 +142,9 @@ export default function MenuItemsList() {
         </button>
       </div>
 
-      {menuItems.length === 0 ? (
+      {filteredMenuItems.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          <p>No menu items found. Add your first menu item!</p>
+          <p>No menu items found for this filter.</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -164,7 +172,7 @@ export default function MenuItemsList() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <tr key={item.menu_item_id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {item.menu_item_id}
