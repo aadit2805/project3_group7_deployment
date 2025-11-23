@@ -115,6 +115,12 @@ export default function ManagerPage() {
               >
                 Revenue Reports
               </Link>
+              <Link
+                href="/manager/order-analytics"
+                className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors font-semibold"
+              >
+                Order Analytics
+              </Link>
               <a
                 href="/kitchen-monitor"
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors font-semibold"

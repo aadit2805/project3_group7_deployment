@@ -236,11 +236,19 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
     await client.query('BEGIN');
 
-    // Update order status
-    const result = await client.query(
-      'UPDATE "Order" SET order_status = $1 WHERE order_id = $2 RETURNING *',
-      [status, orderId]
-    );
+    // Update order status and set completed_at if status is 'completed'
+    let updateQuery = 'UPDATE "Order" SET order_status = $1';
+    const queryParams: any[] = [status];
+
+    if (status === 'completed') {
+      // Check if completed_at is not already set (to avoid overwriting)
+      updateQuery += ', completed_at = COALESCE(completed_at, NOW())';
+    }
+
+    updateQuery += ' WHERE order_id = $2 RETURNING *';
+    queryParams.push(orderId);
+
+    const result = await client.query(updateQuery, queryParams);
 
     if (result.rows.length === 0) {
       await client.query('ROLLBACK');

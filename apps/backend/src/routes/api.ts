@@ -19,6 +19,11 @@ import {
   getRevenueSummary,
   exportRevenueReportCSV,
 } from '../controllers/revenueController';
+import {
+  getAverageCompletionTime,
+  getHourlyCompletionTime,
+  getCompletionTimeSummary,
+} from '../controllers/orderAnalyticsController';
 import { ApiResponse } from '../types';
 import pool from '../config/db';
 import translationRoutes from './translation.routes';
@@ -57,6 +62,11 @@ router.get('/revenue/daily', isAuthenticated, isManager, getDailyRevenueReport);
 router.get('/revenue/summary', isAuthenticated, isManager, getRevenueSummary);
 router.get('/revenue/orders/:date', isAuthenticated, isManager, getOrdersByDate);
 router.get('/revenue/export/csv', isAuthenticated, isManager, exportRevenueReportCSV);
+
+// Order Analytics routes (manager only)
+router.get('/analytics/completion-time', isAuthenticated, isManager, getAverageCompletionTime);
+router.get('/analytics/completion-time/hourly', isAuthenticated, isManager, getHourlyCompletionTime);
+router.get('/analytics/completion-time/summary', isAuthenticated, isManager, getCompletionTimeSummary);
 
 // Meal Type routes
 router.get('/meal-types', getMealTypes);

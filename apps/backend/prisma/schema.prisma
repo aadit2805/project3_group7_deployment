@@ -14,6 +14,7 @@ model Order {
   price         Float?
   order_status  String?   @db.VarChar(50)
   customer_name String?   @db.VarChar(255)
+  completed_at  DateTime? @db.Timestamp(6)
   staff         staff?    @relation(fields: [staff_id], references: [staff_id], onDelete: NoAction, onUpdate: NoAction)
   meal          meal[]
   payment       payment[]
