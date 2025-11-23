@@ -138,14 +138,16 @@ app.get(
   passport.authenticate('google', {
     failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`,
   }),
-  (_req: Request, res: Response) => {
+  (req: Request, res: Response) => {
     // Successful authentication
+    console.log('✅ OAuth Success! User:', req.user?.email, 'Session ID:', req.sessionID);
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard`);
   }
 );
 
 // Get current authenticated user
 app.get('/api/user', isAuthenticated, (req: Request, res: Response) => {
+  console.log('📋 /api/user - Authenticated! User:', req.user?.email);
   res.json({
     id: req.user!.id,
     email: req.user!.email,
