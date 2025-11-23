@@ -66,7 +66,8 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
 
   const handleSubmitOrder = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/orders', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
