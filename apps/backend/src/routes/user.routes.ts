@@ -6,7 +6,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // GET /api/users - Get all users (Manager only)
-router.get('/', isManager, async (req, res) => {
+router.get('/', isManager, async (_req, res) => {
   try {
     const users = await prisma.user.findMany({
       orderBy: {
@@ -21,17 +21,19 @@ router.get('/', isManager, async (req, res) => {
 });
 
 // PUT /api/users/:id/role - Update user role (Manager only)
-router.put('/:id/role', isManager, async (req, res) => {
+router.put('/:id/role', isManager, async (req, res): Promise<void> => {
   const { id } = req.params;
   const { role } = req.body;
 
   if (!role) {
-    return res.status(400).json({ error: 'Role is required' });
+    res.status(400).json({ error: 'Role is required' });
+    return;
   }
 
   // Basic role validation
   if (!['CASHIER', 'MANAGER'].includes(role)) {
-    return res.status(400).json({ error: 'Invalid role specified' });
+    res.status(400).json({ error: 'Invalid role specified' });
+    return;
   }
 
   try {
