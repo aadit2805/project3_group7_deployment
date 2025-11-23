@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Tooltip from '@/app/components/Tooltip';
 
 interface DailyRevenueReport {
   date: string;
@@ -253,8 +254,28 @@ export default function RevenueReportsPage() {
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="mb-4">
         <Link href="/manager">
-          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-            ← Back to Manager Dashboard
+          <button 
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center"
+            aria-label="Back to Manager Dashboard"
+          >
+            <Tooltip text="Back to Manager Dashboard" position="bottom">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                ></path>
+              </svg>
+            </Tooltip>
+            Back to Manager Dashboard
           </button>
         </Link>
       </div>
@@ -270,21 +291,25 @@ export default function RevenueReportsPage() {
               <button
                 onClick={handleDownloadCSV}
                 className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors flex items-center gap-2"
+                aria-label="Download revenue report as CSV file"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                <Tooltip text="Download CSV" position="bottom">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </Tooltip>
                 Download CSV
               </button>
               <button

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
+import Tooltip from '@/app/components/Tooltip';
 
 interface MenuItem {
   menu_item_id: number;
@@ -179,8 +180,28 @@ const CustomerKioskContent = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-4">
         <Link href="/meal-type-selection">
-          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-            ← {t.backToSelection}
+          <button 
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center"
+            aria-label={t.backToSelection}
+          >
+            <Tooltip text={t.backToSelection} position="bottom">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                ></path>
+              </svg>
+            </Tooltip>
+            {t.backToSelection}
           </button>
         </Link>
       </div>
@@ -193,21 +214,25 @@ const CustomerKioskContent = () => {
             <Link
               href="/shopping-cart"
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
+              aria-label={t.shoppingCart}
             >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
+              <Tooltip text={t.shoppingCart} position="bottom">
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  ></path>
+                </svg>
+              </Tooltip>
               {t.shoppingCart}
               {itemCount > 0 && (
                 <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm">

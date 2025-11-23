@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
+import Tooltip from '@/app/components/Tooltip';
 
 interface MenuItem {
   menu_item_id: number;
@@ -247,8 +248,28 @@ const CashierInterfaceContent = () => {
         <>
           <div className="mb-4">
             <Link href="/dashboard">
-              <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                ← {t.backToDashboard}
+              <button 
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center"
+                aria-label={t.backToDashboard}
+              >
+                <Tooltip text={t.backToDashboard} position="bottom">
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    ></path>
+                  </svg>
+                </Tooltip>
+                {t.backToDashboard}
               </button>
             </Link>
           </div>

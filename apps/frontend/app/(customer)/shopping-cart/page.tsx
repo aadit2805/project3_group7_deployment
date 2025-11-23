@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
+import Tooltip from '@/app/components/Tooltip';
 
 const ShoppingCart = () => {
   const context = useContext(OrderContext);

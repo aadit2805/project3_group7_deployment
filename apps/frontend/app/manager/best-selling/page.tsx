@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Tooltip from '@/app/components/Tooltip';
 
 interface BestSellingItem {
   menu_item_id: number;
@@ -189,8 +190,28 @@ export default function BestSellingPage() {
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="mb-4">
         <Link href="/manager">
-          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-            ← Back to Manager Dashboard
+          <button 
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center"
+            aria-label="Back to Manager Dashboard"
+          >
+            <Tooltip text="Back to Manager Dashboard" position="bottom">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                ></path>
+              </svg>
+            </Tooltip>
+            Back to Manager Dashboard
           </button>
         </Link>
       </div>

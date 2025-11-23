@@ -6,6 +6,7 @@ import Link from 'next/link';
 import AddMenuItemForm from './components/AddMenuItemForm';
 import FilterableMenuItems from './components/FilterableMenuItems';
 import ActiveOrdersList from './components/ActiveOrdersList';
+import Tooltip from '@/app/components/Tooltip';
 
 interface User {
   id: number;
@@ -87,8 +88,28 @@ export default function ManagerPage() {
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="mb-4">
         <Link href="/dashboard">
-          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-            ← Back to Dashboard
+          <button 
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center"
+            aria-label="Back to Dashboard"
+          >
+            <Tooltip text="Back to Dashboard" position="bottom">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                ></path>
+              </svg>
+            </Tooltip>
+            Back to Dashboard
           </button>
         </Link>
       </div>
