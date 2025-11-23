@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
 import Tooltip from '@/app/components/Tooltip';
+import VoiceSearchInput from '@/app/components/VoiceSearchInput';
 
 // Interfaces
 interface MenuItem {
@@ -28,6 +29,7 @@ const DrinksPage = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [translatedMenuItems, setTranslatedMenuItems] = useState<Record<number, string>>({});
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const context = useContext(OrderContext);
   const { translateBatch, currentLanguage } = useTranslation();
 
@@ -40,6 +42,7 @@ const DrinksPage = () => {
     'Large',
     'Add',
     'Loading...',
+    'Search menu items',
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -53,6 +56,7 @@ const DrinksPage = () => {
     large: translatedTexts[5] || 'Large',
     add: translatedTexts[6] || 'Add',
     loading: translatedTexts[7] || 'Loading...',
+    searchMenuItems: translatedTexts[8] || 'Search menu items',
   };
 
   useEffect(() => {
@@ -188,8 +192,24 @@ const DrinksPage = () => {
       <div className="grid grid-cols-1 gap-8">
         <div className="col-span-1">
           <section>
+            <div className="mb-4">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="drink-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {drinks.map((item) => (
+              {drinks
+                .filter((item) => {
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
+                .map((item) => (
                 <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
                   <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
                   <div className="flex flex-col space-y-2 mt-4">

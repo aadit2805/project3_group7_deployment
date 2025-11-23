@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
 import Tooltip from '@/app/components/Tooltip';
+import VoiceSearchInput from '@/app/components/VoiceSearchInput';
 
 // Interfaces to match the data structure
 interface MenuItem {
@@ -28,6 +29,7 @@ const ALaCartePage = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [translatedMenuItems, setTranslatedMenuItems] = useState<Record<number, string>>({});
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const context = useContext(OrderContext);
   const { translateBatch, currentLanguage } = useTranslation();
 
@@ -42,6 +44,7 @@ const ALaCartePage = () => {
     'Large',
     'Add',
     'Loading...',
+    'Search menu items',
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -57,6 +60,7 @@ const ALaCartePage = () => {
     large: translatedTexts[7] || 'Large',
     add: translatedTexts[8] || 'Add',
     loading: translatedTexts[9] || 'Loading...',
+    searchMenuItems: translatedTexts[10] || 'Search menu items',
   };
 
   useEffect(() => {
@@ -197,8 +201,24 @@ const ALaCartePage = () => {
         <div className="col-span-1">
           <section className="mb-10">
             <h2 className="text-3xl font-semibold mb-4">{t.entrees}</h2>
+            <div className="mb-4">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="entree-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {entrees.map((item) => (
+              {entrees
+                .filter((item) => {
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
+                .map((item) => (
                 <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
                   <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
                   <div className="flex space-x-2 mt-4">
@@ -228,8 +248,24 @@ const ALaCartePage = () => {
 
           <section>
             <h2 className="text-3xl font-semibold mb-4">{t.sides}</h2>
+            <div className="mb-4">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="side-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {sides.map((item) => (
+              {sides
+                .filter((item) => {
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
+                .map((item) => (
                 <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
                   <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
                   <div className="flex space-x-2 mt-4">

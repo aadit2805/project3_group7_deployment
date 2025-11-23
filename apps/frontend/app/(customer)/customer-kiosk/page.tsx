@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
 import Tooltip from '@/app/components/Tooltip';
+import VoiceSearchInput from '@/app/components/VoiceSearchInput';
 
 interface MenuItem {
   menu_item_id: number;
@@ -43,6 +44,7 @@ const CustomerKioskContent = () => {
     'Upcharge',
     'Update Item',
     'Add to Order',
+    'Search menu items',
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -57,6 +59,7 @@ const CustomerKioskContent = () => {
     upcharge: translatedTexts[6] || 'Upcharge',
     updateItem: translatedTexts[7] || 'Update Item',
     addToOrder: translatedTexts[8] || 'Add to Order',
+    searchMenuItems: translatedTexts[9] || 'Search menu items',
   };
 
   if (!context) {
@@ -72,6 +75,7 @@ const CustomerKioskContent = () => {
   const [selectedEntrees, setSelectedEntrees] = useState<MenuItem[]>([]);
   const [selectedSides, setSelectedSides] = useState<MenuItem[]>([]);
   const [selectedDrink, setSelectedDrink] = useState<MenuItem | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     if (!mealTypeId) {
@@ -246,9 +250,24 @@ const CustomerKioskContent = () => {
             <h2 className="text-3xl font-semibold mb-4">
               {t.selectEntrees} ({selectedEntrees.length}/{selectedMealType.entree_count})
             </h2>
+            <div className="mb-4">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="entree-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {menuItems
-                .filter((item) => item.item_type === 'entree')
+                .filter((item) => {
+                  if (item.item_type !== 'entree') return false;
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
                 .map((item) => (
                   <div
                     key={item.menu_item_id}
@@ -266,9 +285,24 @@ const CustomerKioskContent = () => {
             <h2 className="text-3xl font-semibold mb-4">
               {t.selectSides} ({selectedSides.length}/{selectedMealType.side_count})
             </h2>
+            <div className="mb-4">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="side-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {menuItems
-                .filter((item) => item.item_type === 'side')
+                .filter((item) => {
+                  if (item.item_type !== 'side') return false;
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
                 .map((item) => (
                   <div
                     key={item.menu_item_id}
@@ -285,9 +319,24 @@ const CustomerKioskContent = () => {
           {selectedMealType.drink_size !== 'none' && (
             <section className="mb-10">
               <h2 className="text-3xl font-semibold mb-4">{t.selectDrink} (1)</h2>
+              <div className="mb-4">
+                <VoiceSearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder={t.searchMenuItems}
+                  label={t.searchMenuItems}
+                  id="drink-search"
+                />
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {menuItems
-                  .filter((item) => item.item_type === 'drink')
+                  .filter((item) => {
+                    if (item.item_type !== 'drink') return false;
+                    if (!searchQuery.trim()) return true;
+                    const searchLower = searchQuery.toLowerCase();
+                    const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                    return itemName.includes(searchLower);
+                  })
                   .map((item) => (
                     <div
                       key={item.menu_item_id}
