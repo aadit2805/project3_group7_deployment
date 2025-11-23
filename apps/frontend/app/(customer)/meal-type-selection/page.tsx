@@ -89,11 +89,12 @@ const MealTypeSelection = () => {
 
   return (
     <div className="container mx-auto px-4">
-      <div className="flex justify-between items-center my-8">
+      <header className="flex justify-between items-center my-8">
         <h1 className="text-4xl font-bold">{t.title}</h1>
         <Link
           href="/shopping-cart"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          aria-label={`View shopping cart${itemCount > 0 ? ` with ${itemCount} item${itemCount !== 1 ? 's' : ''}` : ', currently empty'}`}
         >
           <svg
             className="w-5 h-5 mr-2"
@@ -101,6 +102,7 @@ const MealTypeSelection = () => {
             stroke="currentColor"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -109,52 +111,89 @@ const MealTypeSelection = () => {
               d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
             ></path>
           </svg>
-          {t.shoppingCart}
+          <span>{t.shoppingCart}</span>
           {itemCount > 0 && (
-            <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm">
+            <span 
+              className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm"
+              aria-label={`${itemCount} items in cart`}
+            >
               {itemCount}
             </span>
           )}
         </Link>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {mealTypes
-          .filter(
-            (mt) =>
-              (mt.meal_type_id >= 1 && mt.meal_type_id <= 3) ||
-              (mt.meal_type_id >= 10 && mt.meal_type_id <= 12)
-          )
-          .map((mealType, index) => (
+      </header>
+      <nav aria-label="Meal options">
+        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" role="list">
+          {mealTypes
+            .filter(
+              (mt) =>
+                (mt.meal_type_id >= 1 && mt.meal_type_id <= 3) ||
+                (mt.meal_type_id >= 10 && mt.meal_type_id <= 12)
+            )
+            .map((mealType, index) => {
+              const mealName = translatedMealTypeNames[index] || mealType.meal_type_name;
+              return (
+                <li key={mealType.meal_type_id}>
+                  <Link
+                    href={`/customer-kiosk?mealTypeId=${mealType.meal_type_id}`}
+                    className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    aria-label={`Select ${mealName}, priced at ${mealType.meal_type_price.toFixed(2)} dollars, includes ${mealType.entree_count} entree${mealType.entree_count !== 1 ? 's' : ''}, ${mealType.side_count} side${mealType.side_count !== 1 ? 's' : ''}${mealType.drink_size ? `, and a ${mealType.drink_size} drink` : ''}`}
+                  >
+                    <article>
+                      <h2 className="text-2xl font-bold mb-2">
+                        {mealName}
+                      </h2>
+                      <dl className="text-gray-700 space-y-1">
+                        <div>
+                          <dt className="inline">{t.price}: </dt>
+                          <dd className="inline">${mealType.meal_type_price.toFixed(2)}</dd>
+                        </div>
+                        <div>
+                          <dt className="inline">{t.entrees}: </dt>
+                          <dd className="inline">{mealType.entree_count}</dd>
+                        </div>
+                        <div>
+                          <dt className="inline">{t.sides}: </dt>
+                          <dd className="inline">{mealType.side_count}</dd>
+                        </div>
+                        {mealType.drink_size && (
+                          <div>
+                            <dt className="inline">{t.drink}: </dt>
+                            <dd className="inline">{mealType.drink_size}</dd>
+                          </div>
+                        )}
+                      </dl>
+                    </article>
+                  </Link>
+                </li>
+              );
+            })}
+          <li>
             <Link
-              key={mealType.meal_type_id}
-              href={`/customer-kiosk?mealTypeId=${mealType.meal_type_id}`}
+              href="/a-la-carte"
+              className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label="Select a la carte option to create your own custom meal"
             >
-              <div className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200">
-                <h2 className="text-2xl font-bold mb-2">
-                  {translatedMealTypeNames[index] || mealType.meal_type_name}
-                </h2>
-                <p className="text-gray-700">{t.price}: ${mealType.meal_type_price.toFixed(2)}</p>
-                <p className="text-gray-700">{t.entrees}: {mealType.entree_count}</p>
-                <p className="text-gray-700">{t.sides}: {mealType.side_count}</p>
-                {mealType.drink_size && (
-                  <p className="text-gray-700">{t.drink}: {mealType.drink_size}</p>
-                )}
-              </div>
+              <article>
+                <h2 className="text-2xl font-bold mb-2">{t.aLaCarte}</h2>
+                <p className="text-gray-700">{t.createYourOwn}</p>
+              </article>
             </Link>
-          ))}
-        <Link href="/a-la-carte">
-          <div className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200">
-            <h2 className="text-2xl font-bold mb-2">{t.aLaCarte}</h2>
-            <p className="text-gray-700">{t.createYourOwn}</p>
-          </div>
-        </Link>
-        <Link href="/drinks">
-          <div className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200">
-            <h2 className="text-2xl font-bold mb-2">{t.drinks}</h2>
-            <p className="text-gray-700">{t.selectBeverage}</p>
-          </div>
-        </Link>
-      </div>
+          </li>
+          <li>
+            <Link
+              href="/drinks"
+              className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label="Select drinks option to choose a beverage"
+            >
+              <article>
+                <h2 className="text-2xl font-bold mb-2">{t.drinks}</h2>
+                <p className="text-gray-700">{t.selectBeverage}</p>
+              </article>
+            </Link>
+          </li>
+        </ul>
+      </nav>
     </div>
   );
 };

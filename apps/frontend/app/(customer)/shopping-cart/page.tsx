@@ -147,10 +147,11 @@ const ShoppingCart = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
+      <nav className="mb-6" aria-label="Breadcrumb">
         <Link
           href="/meal-type-selection"
-          className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
+          className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          aria-label="Back to meal type selection"
         >
           <svg
             className="w-4 h-4 mr-2"
@@ -158,6 +159,7 @@ const ShoppingCart = () => {
             stroke="currentColor"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -168,52 +170,58 @@ const ShoppingCart = () => {
           </svg>
           {t.backToOrdering}
         </Link>
-      </div>
+      </nav>
 
-      <div className="bg-gray-100 p-6 rounded-lg">
-        <h2 className="text-3xl font-semibold mb-4">{t.title}</h2>
+      <section className="bg-gray-100 p-6 rounded-lg" aria-labelledby="cart-heading">
+        <h1 id="cart-heading" className="text-3xl font-semibold mb-4">{t.title}</h1>
         {order.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="text-center py-8" role="status">
             <p className="text-xl mb-4">{t.cartEmpty}</p>
             <Link
               href="/meal-type-selection"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label="Start ordering meals"
             >
               {t.startOrdering}
             </Link>
           </div>
         ) : (
           <>
-            {order.map((orderItem, index) => {
-              const isDrinkOnly =
-                orderItem.entrees.length === 0 && orderItem.sides.length === 0 && orderItem.drink;
-              const itemTotalPrice =
-                orderItem.mealType.meal_type_price +
-                orderItem.entrees.reduce((sum, item) => sum + item.upcharge, 0) +
-                orderItem.sides.reduce((sum, item) => sum + item.upcharge, 0) +
-                (orderItem.drink ? orderItem.drink.upcharge : 0);
+            <ul role="list" aria-label="Cart items">
+              {order.map((orderItem, index) => {
+                const isDrinkOnly =
+                  orderItem.entrees.length === 0 && orderItem.sides.length === 0 && orderItem.drink;
+                const itemTotalPrice =
+                  orderItem.mealType.meal_type_price +
+                  orderItem.entrees.reduce((sum, item) => sum + item.upcharge, 0) +
+                  orderItem.sides.reduce((sum, item) => sum + item.upcharge, 0) +
+                  (orderItem.drink ? orderItem.drink.upcharge : 0);
+                
+                const mealName = translatedNames[`meal_${orderItem.mealType.meal_type_id}`] || orderItem.mealType.meal_type_name;
 
-              return (
-                <div key={index} className="mb-4 pb-4 border-b border-gray-200 bg-white p-4 rounded">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-2xl font-bold">
-                      {translatedNames[`meal_${orderItem.mealType.meal_type_id}`] || orderItem.mealType.meal_type_name}
-                    </h3>
-                    <div>
-                      <button
-                        onClick={() => handleEditItem(index)}
-                        className="text-blue-500 hover:text-blue-700 font-bold mr-2 px-3 py-1 border border-blue-500 rounded"
-                      >
-                        {t.edit}
-                      </button>
-                      <button
-                        onClick={() => handleRemoveFromOrder(index)}
-                        className="text-red-500 hover:text-red-700 font-bold px-3 py-1 border border-red-500 rounded"
-                      >
-                        {t.remove}
-                      </button>
+                return (
+                  <li key={index} className="mb-4 pb-4 border-b border-gray-200 bg-white p-4 rounded">
+                    <div className="flex justify-between items-center">
+                      <h2 className="text-2xl font-bold">
+                        {mealName}
+                      </h2>
+                      <div role="group" aria-label={`Actions for ${mealName}`}>
+                        <button
+                          onClick={() => handleEditItem(index)}
+                          className="text-blue-500 hover:text-blue-700 font-bold mr-2 px-3 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          aria-label={`Edit ${mealName} item`}
+                        >
+                          {t.edit}
+                        </button>
+                        <button
+                          onClick={() => handleRemoveFromOrder(index)}
+                          className="text-red-500 hover:text-red-700 font-bold px-3 py-1 border border-red-500 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                          aria-label={`Remove ${mealName} from cart`}
+                        >
+                          {t.remove}
+                        </button>
+                      </div>
                     </div>
-                  </div>
                   {isDrinkOnly ? (
                     <>
                       <p className="text-lg mt-2">{t.basePrice}: ${orderItem.mealType.meal_type_price.toFixed(2)}</p>
@@ -228,8 +236,8 @@ const ShoppingCart = () => {
                       <p className="text-lg mt-2">{t.basePrice}: ${orderItem.mealType.meal_type_price.toFixed(2)}</p>
                       {orderItem.entrees.length > 0 && (
                         <>
-                          <h4 className="text-xl font-semibold mt-4">{t.entrees}:</h4>
-                          <ul className="list-disc list-inside ml-4">
+                          <h3 className="text-xl font-semibold mt-4">{t.entrees}:</h3>
+                          <ul className="list-disc list-inside ml-4" role="list" aria-label="Selected entrees">
                             {orderItem.entrees.map((item) => (
                               <li key={item.menu_item_id} className="text-lg">
                                 {translatedNames[`item_${item.menu_item_id}`] || item.name} (+${item.upcharge.toFixed(2)})
@@ -240,8 +248,8 @@ const ShoppingCart = () => {
                       )}
                       {orderItem.sides.length > 0 && (
                         <>
-                          <h4 className="text-xl font-semibold mt-4">{t.sides}:</h4>
-                          <ul className="list-disc list-inside ml-4">
+                          <h3 className="text-xl font-semibold mt-4">{t.sides}:</h3>
+                          <ul className="list-disc list-inside ml-4" role="list" aria-label="Selected sides">
                             {orderItem.sides.map((item) => (
                               <li key={item.menu_item_id} className="text-lg">
                                 {translatedNames[`item_${item.menu_item_id}`] || item.name} (+${item.upcharge.toFixed(2)})
@@ -257,18 +265,24 @@ const ShoppingCart = () => {
                       )}
                     </>
                   )}
-                  <div className="mt-2 text-right">
-                    <p className="text-xl font-semibold">{t.itemTotal}: ${itemTotalPrice.toFixed(2)}</p>
-                  </div>
-                </div>
-              );
-            })}
+                    <div className="mt-2 text-right">
+                      <p className="text-xl font-semibold">
+                        {t.itemTotal}: <span aria-label={`Item total ${itemTotalPrice.toFixed(2)} dollars`}>${itemTotalPrice.toFixed(2)}</span>
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
             <div className="mt-6 pt-4 border-t-2 border-gray-300">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-2xl font-bold">{t.total}: ${totalPrice.toFixed(2)}</h3>
+                <p className="text-2xl font-bold" role="status" aria-live="polite">
+                  {t.total}: <span aria-label={`Total price ${totalPrice.toFixed(2)} dollars`}>${totalPrice.toFixed(2)}</span>
+                </p>
                 <button
                   onClick={handleSubmitOrder}
-                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl"
+                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  aria-label={`Submit order with ${order.length} item${order.length !== 1 ? 's' : ''}, total ${totalPrice.toFixed(2)} dollars`}
                 >
                   {t.submitOrder}
                 </button>
@@ -276,7 +290,7 @@ const ShoppingCart = () => {
             </div>
           </>
         )}
-      </div>
+      </section>
     </div>
   );
 };

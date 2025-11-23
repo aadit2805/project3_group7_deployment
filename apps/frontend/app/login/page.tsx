@@ -36,8 +36,12 @@ function LoginContent() {
       <div className="z-10 max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
         {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
+          <div 
+            className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded" 
+            role="alert"
+            aria-live="assertive"
+          >
+            <span className="font-semibold">Error: </span>{error}
           </div>
         )}
 
@@ -45,9 +49,10 @@ function LoginContent() {
           <button
             onClick={handleGoogleLogin}
             type="button"
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label="Sign in with Google OAuth"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -68,18 +73,20 @@ function LoginContent() {
             <span className="text-gray-700 font-medium">Sign in with Google</span>
           </button>
 
-
-
-          <div className="text-center text-sm text-gray-600">
-            <p>Click the button above to authenticate with Google OAuth</p>
-          </div>
+          <p className="text-center text-sm text-gray-600">
+            Click the button above to authenticate with Google OAuth
+          </p>
         </div>
 
-        <div className="mt-6 text-center">
-          <Link href="/" className="text-blue-500 hover:underline text-sm">
+        <nav className="mt-6 text-center" aria-label="Back navigation">
+          <Link 
+            href="/" 
+            className="text-blue-500 hover:underline text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+            aria-label="Return to home page"
+          >
             ← Back to Home
           </Link>
-        </div>
+        </nav>
       </div>
     </main>
   );
