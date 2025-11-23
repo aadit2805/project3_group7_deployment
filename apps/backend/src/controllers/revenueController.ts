@@ -258,3 +258,150 @@ export const getRevenueSummary = async (req: Request, res: Response): Promise<vo
     });
   }
 };
+
+// Helper function to escape CSV values
+const escapeCSVValue = (value: any): string => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  const stringValue = String(value);
+  // If the value contains comma, newline, or quote, wrap it in quotes and escape quotes
+  if (stringValue.includes(',') || stringValue.includes('\n') || stringValue.includes('"')) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+};
+
+// Export daily revenue report as CSV
+export const exportRevenueReportCSV = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { start_date, end_date, date } = req.query;
+
+    let query = '';
+    let queryParams: string[] = [];
+
+    // Use the same query logic as getDailyRevenueReport
+    if (date) {
+      query = `
+        SELECT 
+          DATE(o.datetime) as date,
+          COALESCE(SUM(o.price), 0) as total_sales,
+          COUNT(DISTINCT o.order_id) as order_count,
+          CASE 
+            WHEN COUNT(DISTINCT o.order_id) > 0 
+            THEN COALESCE(SUM(o.price), 0) / COUNT(DISTINCT o.order_id)
+            ELSE 0 
+          END as average_order_value,
+          COALESCE(SUM(o.price * 0.0825), 0) as total_tax,
+          COALESCE(SUM(o.price * 0.9175), 0) as net_sales
+        FROM "Order" o
+        WHERE DATE(o.datetime) = $1
+          AND o.order_status != 'cancelled'
+        GROUP BY DATE(o.datetime)
+        ORDER BY DATE(o.datetime) DESC
+      `;
+      queryParams = [date as string];
+    } else if (start_date && end_date) {
+      query = `
+        SELECT 
+          DATE(o.datetime) as date,
+          COALESCE(SUM(o.price), 0) as total_sales,
+          COUNT(DISTINCT o.order_id) as order_count,
+          CASE 
+            WHEN COUNT(DISTINCT o.order_id) > 0 
+            THEN COALESCE(SUM(o.price), 0) / COUNT(DISTINCT o.order_id)
+            ELSE 0 
+          END as average_order_value,
+          COALESCE(SUM(o.price * 0.0825), 0) as total_tax,
+          COALESCE(SUM(o.price * 0.9175), 0) as net_sales
+        FROM "Order" o
+        WHERE DATE(o.datetime) >= $1 
+          AND DATE(o.datetime) <= $2
+          AND o.order_status != 'cancelled'
+        GROUP BY DATE(o.datetime)
+        ORDER BY DATE(o.datetime) DESC
+      `;
+      queryParams = [start_date as string, end_date as string];
+    } else {
+      query = `
+        SELECT 
+          DATE(o.datetime) as date,
+          COALESCE(SUM(o.price), 0) as total_sales,
+          COUNT(DISTINCT o.order_id) as order_count,
+          CASE 
+            WHEN COUNT(DISTINCT o.order_id) > 0 
+            THEN COALESCE(SUM(o.price), 0) / COUNT(DISTINCT o.order_id)
+            ELSE 0 
+          END as average_order_value,
+          COALESCE(SUM(o.price * 0.0825), 0) as total_tax,
+          COALESCE(SUM(o.price * 0.9175), 0) as net_sales
+        FROM "Order" o
+        WHERE o.datetime >= CURRENT_DATE - INTERVAL '30 days'
+          AND o.order_status != 'cancelled'
+        GROUP BY DATE(o.datetime)
+        ORDER BY DATE(o.datetime) DESC
+      `;
+    }
+
+    const result = await pool.query(query, queryParams);
+
+    // Build CSV content
+    const csvRows: string[] = [];
+    
+    // Add header row
+    csvRows.push(
+      'Date,Total Sales,Order Count,Average Order Value,Total Tax,Net Sales'
+    );
+
+    // Add data rows
+    for (const row of result.rows) {
+      const date = row.date.toISOString().split('T')[0];
+      const totalSales = parseFloat(row.total_sales) || 0;
+      const orderCount = parseInt(row.order_count) || 0;
+      const avgOrderValue = parseFloat(row.average_order_value) || 0;
+      const totalTax = parseFloat(row.total_tax) || 0;
+      const netSales = parseFloat(row.net_sales) || 0;
+
+      csvRows.push(
+        `${escapeCSVValue(date)},${escapeCSVValue(totalSales.toFixed(2))},${escapeCSVValue(orderCount)},${escapeCSVValue(avgOrderValue.toFixed(2))},${escapeCSVValue(totalTax.toFixed(2))},${escapeCSVValue(netSales.toFixed(2))}`
+      );
+    }
+
+    // Add summary row
+    const totalSales = result.rows.reduce((sum, row) => sum + (parseFloat(row.total_sales) || 0), 0);
+    const totalOrders = result.rows.reduce((sum, row) => sum + (parseInt(row.order_count) || 0), 0);
+    const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+    const totalTax = totalSales * 0.0825;
+    const netSales = totalSales * 0.9175;
+
+    csvRows.push('');
+    csvRows.push(
+      `TOTAL,${escapeCSVValue(totalSales.toFixed(2))},${escapeCSVValue(totalOrders)},${escapeCSVValue(avgOrderValue.toFixed(2))},${escapeCSVValue(totalTax.toFixed(2))},${escapeCSVValue(netSales.toFixed(2))}`
+    );
+
+    const csvContent = csvRows.join('\n');
+
+    // Generate filename with date range
+    let filename = 'revenue-report';
+    if (date) {
+      filename = `revenue-report-${date}`;
+    } else if (start_date && end_date) {
+      filename = `revenue-report-${start_date}-to-${end_date}`;
+    } else {
+      const today = new Date().toISOString().split('T')[0];
+      filename = `revenue-report-last-30-days-${today}`;
+    }
+
+    // Set headers for CSV download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
+    res.status(200).send(csvContent);
+  } catch (error) {
+    console.error('Error exporting revenue report CSV:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to export revenue report',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};

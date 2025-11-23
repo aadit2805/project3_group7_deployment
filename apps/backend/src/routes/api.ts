@@ -17,6 +17,7 @@ import {
   getDailyRevenueReport,
   getOrdersByDate,
   getRevenueSummary,
+  exportRevenueReportCSV,
 } from '../controllers/revenueController';
 import { ApiResponse } from '../types';
 import pool from '../config/db';
@@ -55,6 +56,7 @@ router.patch('/orders/:orderId/status', isAuthenticated, isManager, updateOrderS
 router.get('/revenue/daily', isAuthenticated, isManager, getDailyRevenueReport);
 router.get('/revenue/summary', isAuthenticated, isManager, getRevenueSummary);
 router.get('/revenue/orders/:date', isAuthenticated, isManager, getOrdersByDate);
+router.get('/revenue/export/csv', isAuthenticated, isManager, exportRevenueReportCSV);
 
 // Meal Type routes
 router.get('/meal-types', getMealTypes);
