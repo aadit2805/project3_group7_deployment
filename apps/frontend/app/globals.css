@@ -165,6 +165,29 @@ button,
 a[role="button"] {
   cursor: pointer;
   user-select: none;
+  /* Ensure minimum 44x44px touch target for eye-tracking accessibility (WCAG 2.1 Level AAA) */
+  min-height: 44px;
+  min-width: 44px;
+  /* Use flexbox to center content while maintaining touch target */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Ensure padding contributes to touch target if not explicitly set */
+  box-sizing: border-box;
+}
+
+/* Links styled as buttons should also meet touch target requirements */
+/* Target links with button-like styling (background color + padding) */
+a[class*="bg-"][class*="px-"],
+a[class*="bg-"][class*="py-"],
+a[class*="button"],
+a[class*="btn"] {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 button:disabled,
