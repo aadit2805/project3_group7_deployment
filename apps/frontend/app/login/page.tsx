@@ -18,9 +18,9 @@ function LoginContent() {
   }, [searchParams]);
 
   const handleGoogleLogin = () => {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
     try {
-      window.location.href = `${backendUrl}/auth/google`;
+      // Use relative path - Next.js will rewrite to backend URL
+      window.location.href = '/auth/google';
     } catch (error) {
       console.error('Error redirecting to OAuth:', error);
       setError(
