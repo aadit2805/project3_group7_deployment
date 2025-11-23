@@ -30,24 +30,6 @@ export default function KitchenMonitor() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    // Role-based access control
-    const fetchUser = async () => {
-      try {
-        const res = await fetch('/api/user');
-        if (!res.ok) throw new Error('Not authenticated');
-        const user = await res.json();
-        if (!['CASHIER', 'MANAGER'].includes(user.role)) {
-          router.push('/login'); // Redirect if not a cashier or manager
-        }
-      } catch (e) {
-        router.push('/login');
-      }
-    };
-    fetchUser();
-  }, [router]);
-
-
   // Fetch orders from the API
   const fetchOrders = useCallback(async () => {
     try {

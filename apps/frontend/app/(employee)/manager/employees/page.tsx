@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEmployee } from '@/app/context/EmployeeContext';
 
 interface User {
   id: number;
@@ -12,44 +12,31 @@ interface User {
 }
 
 const EmployeeManagementPage = () => {
+  const { user: currentUser } = useEmployee();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch('/api/users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users.');
-      }
-      const data = await response.json();
-      setUsers(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    // Role-based access control
-    const fetchUser = async () => {
+    const fetchUsers = async () => {
       try {
-        const res = await fetch('/api/user');
-        if (!res.ok) throw new Error('Not authenticated');
-        const user = await res.json();
-        if (user.role !== 'MANAGER') {
-          router.push('/dashboard'); // Redirect if not a manager
-        } else {
-          await fetchUsers();
+        const response = await fetch('/api/users');
+        if (!response.ok) {
+          throw new Error('Failed to fetch users.');
         }
-      } catch (e) {
-        router.push('/login');
+        const data = await response.json();
+        setUsers(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchUser();
-  }, [router]);
+
+    if (currentUser?.role === 'MANAGER') {
+      fetchUsers();
+    }
+  }, [currentUser]);
 
   const handleRoleChange = async (userId: number, newRole: string) => {
     try {
@@ -72,15 +59,23 @@ const EmployeeManagementPage = () => {
       );
     } catch (err: any) {
       setError(err.message);
-      // Optionally, revert the UI change here
     }
   };
+  
+  if (currentUser?.role !== 'MANAGER') {
+    return (
+      <div className="text-center text-red-600 max-w-md mx-auto mt-10">
+        <p className="text-xl font-semibold mb-2">Access Denied</p>
+        <p>You must be a manager to view this page.</p>
+      </div>
+    );
+  }
 
   if (loading) return <div className="text-center p-8">Loading...</div>;
   if (error) return <div className="text-center p-8 text-red-500">Error: {error}</div>;
 
   return (
-    <div className="container mx-auto p-8">
+    <div>
       <h1 className="text-3xl font-bold mb-6">Employee Management</h1>
       <div className="bg-white shadow-md rounded-lg overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
@@ -102,6 +97,7 @@ const EmployeeManagementPage = () => {
                     value={user.role}
                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
                     className="p-2 border rounded-md"
+                    disabled={currentUser?.id === user.id} // prevent manager from changing their own role
                   >
                     <option value="CASHIER">Cashier</option>
                     <option value="MANAGER">Manager</option>

@@ -35,7 +35,7 @@ import pool from '../config/db';
 import translationRoutes from './translation.routes';
 import weatherRoutes from './weather.routes';
 import inventoryRoutes from './inventory.routes';
-import { isAuthenticated, isManager } from '../middleware/auth';
+import { isAuthenticated, isManager, isCashierOrManager } from '../middleware/auth';
 import axios from 'axios';
 
 const router = Router();
@@ -57,8 +57,8 @@ router.post('/orders', createOrder);
 // GET /api/orders/active - Get all active orders (manager only)
 router.get('/orders/active', isAuthenticated, isManager, getActiveOrders);
 
-// GET /api/orders/kitchen - Get detailed orders for kitchen monitor (manager only)
-router.get('/orders/kitchen', isAuthenticated, isManager, getKitchenOrders);
+// GET /api/orders/kitchen - Get detailed orders for kitchen monitor (cashier or manager)
+router.get('/orders/kitchen', isAuthenticated, isCashierOrManager, getKitchenOrders);
 
 // PATCH /api/orders/:orderId/status - Update order status (manager only)
 router.patch('/orders/:orderId/status', isAuthenticated, isManager, updateOrderStatus);

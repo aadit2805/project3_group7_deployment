@@ -96,23 +96,6 @@ const CashierInterfaceContent = () => {
   const [translatedMenuItems, setTranslatedMenuItems] = useState<Record<number, string>>({});
 
   useEffect(() => {
-    // Role-based access control
-    const fetchUser = async () => {
-      try {
-        const res = await fetch('/api/user');
-        if (!res.ok) throw new Error('Not authenticated');
-        const user = await res.json();
-        if (!['CASHIER', 'MANAGER'].includes(user.role)) {
-          router.push('/login'); // Redirect if not a cashier or manager
-        }
-      } catch (e) {
-        router.push('/login');
-      }
-    };
-    fetchUser();
-  }, [router]);
-
-  useEffect(() => {
     const fetchMealTypes = async () => {
       try {
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
