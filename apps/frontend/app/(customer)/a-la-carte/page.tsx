@@ -218,31 +218,31 @@ const ALaCartePage = () => {
                   const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
                   return itemName.includes(searchLower);
                 })
-                .map((item) => (
-                <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
-                  <div className="flex space-x-2 mt-4">
-                    <button
-                      onClick={() => handleAddItem(item, 4)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.small}
-                    </button>
-                    <button
-                      onClick={() => handleAddItem(item, 5)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.medium}
-                    </button>
-                    <button
-                      onClick={() => handleAddItem(item, 6)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.large}
-                    </button>
+                .map((item, index) => (
+                  <div key={item.menu_item_id} className={`bg-white rounded-lg shadow-md p-6 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}>
+                    <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
+                    <div className="flex space-x-2 mt-4">
+                      <button
+                        onClick={() => handleAddItem(item, 4)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.small}
+                      </button>
+                      <button
+                        onClick={() => handleAddItem(item, 5)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.medium}
+                      </button>
+                      <button
+                        onClick={() => handleAddItem(item, 6)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.large}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </section>
 
@@ -265,31 +265,31 @@ const ALaCartePage = () => {
                   const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
                   return itemName.includes(searchLower);
                 })
-                .map((item) => (
-                <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
-                  <div className="flex space-x-2 mt-4">
-                    <button
-                      onClick={() => handleAddItem(item, 7)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.small}
-                    </button>
-                    <button
-                      onClick={() => handleAddItem(item, 8)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.medium}
-                    </button>
-                    <button
-                      onClick={() => handleAddItem(item, 9)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.large}
-                    </button>
+                .map((item, index) => (
+                  <div key={item.menu_item_id} className={`bg-white rounded-lg shadow-md p-6 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}>
+                    <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
+                    <div className="flex space-x-2 mt-4">
+                      <button
+                        onClick={() => handleAddItem(item, 7)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.small}
+                      </button>
+                      <button
+                        onClick={() => handleAddItem(item, 8)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.medium}
+                      </button>
+                      <button
+                        onClick={() => handleAddItem(item, 9)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.large}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </section>
         </div>

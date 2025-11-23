@@ -115,7 +115,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Cashier Interface */}
           {(user?.role === 'MANAGER' || user?.role === 'CASHIER') && (
-            <Link href="/cashier-interface" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <Link href="/cashier-interface" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg hover-scale transition-all duration-200 animate-scale-in animate-stagger-1">
               <h2 className="mb-2 text-xl font-semibold text-gray-700">
                 Cashier Interface
               </h2>
@@ -127,7 +127,7 @@ export default function DashboardPage() {
 
           {/* Manager Dashboard */}
           {user?.role === 'MANAGER' && (
-            <Link href="/manager" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <Link href="/manager" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg hover-scale transition-all duration-200 animate-scale-in animate-stagger-2">
               <h2 className="mb-2 text-xl font-semibold text-gray-700">
                 Manager Dashboard
               </h2>
@@ -139,7 +139,7 @@ export default function DashboardPage() {
 
           {/* Kitchen Monitor */}
           {(user?.role === 'MANAGER' || user?.role === 'KITCHEN') && (
-            <Link href="/kitchen-monitor" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <Link href="/kitchen-monitor" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg hover-scale transition-all duration-200 animate-scale-in animate-stagger-3">
               <h2 className="mb-2 text-xl font-semibold text-gray-700">
                 Kitchen Monitor
               </h2>
@@ -151,7 +151,7 @@ export default function DashboardPage() {
 
           {/* Inventory Manager */}
           {user?.role === 'MANAGER' && (
-            <Link href="/inventory-manager" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <Link href="/inventory-manager" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg hover-scale transition-all duration-200 animate-scale-in animate-stagger-4">
               <h2 className="mb-2 text-xl font-semibold text-gray-700">
                 Inventory Manager
               </h2>
@@ -163,7 +163,7 @@ export default function DashboardPage() {
 
           {/* Restock Report */}
           {user?.role === 'MANAGER' && (
-            <Link href="/restock-report" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <Link href="/restock-report" className="block rounded-lg border border-gray-200 p-6 hover:shadow-lg hover-scale transition-all duration-200 animate-scale-in animate-stagger-1">
               <h2 className="mb-2 text-xl font-semibold text-gray-700">
                 Restock Report
               </h2>

@@ -136,11 +136,12 @@ const MealTypeSelection = () => {
             )
             .map((mealType, index) => {
               const mealName = translatedMealTypeNames[index] || mealType.meal_type_name;
+              const staggerDelay = index % 6; // Cycle through stagger delays
               return (
-                <li key={mealType.meal_type_id}>
+                <li key={mealType.meal_type_id} className={`animate-scale-in animate-stagger-${Math.min(staggerDelay + 1, 4)}`}>
                   <Link
                     href={`/customer-kiosk?mealTypeId=${mealType.meal_type_id}`}
-                    className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg hover-scale transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     aria-label={`Select ${mealName}, priced at ${mealType.meal_type_price.toFixed(2)} dollars, includes ${mealType.entree_count} entree${mealType.entree_count !== 1 ? 's' : ''}, ${mealType.side_count} side${mealType.side_count !== 1 ? 's' : ''}${mealType.drink_size ? `, and a ${mealType.drink_size} drink` : ''}`}
                   >
                     <article>

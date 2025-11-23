@@ -52,24 +52,106 @@
   font-size: 20px;
 }
 
-/* Reduced Motion */
+/* Reduced Motion - Disable all animations and transitions to minimize visual distractions */
 .reduced-motion *,
 .reduced-motion *::before,
 .reduced-motion *::after {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
+  animation-delay: 0ms !important;
+  animation-name: none !important;
   transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
   scroll-behavior: auto !important;
 }
 
+/* Disable all animation and transition classes when reduced motion is active */
+.reduced-motion [class*="transition"],
+.reduced-motion [class*="animate-"],
+.reduced-motion [class*="duration-"],
+.reduced-motion [class*="delay-"] {
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+  transition-property: none !important;
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-name: none !important;
+  animation-play-state: paused !important;
+}
+
+/* Disable custom animation classes with higher specificity */
+.reduced-motion .hover-scale,
+.reduced-motion .button-press,
+.reduced-motion .animate-fade-in,
+.reduced-motion .animate-slide-in-up,
+.reduced-motion .animate-slide-in-down,
+.reduced-motion .animate-scale-in,
+.reduced-motion .animate-bounce-in,
+.reduced-motion [class*="animate-stagger"],
+.reduced-motion [class*="animate-stagger-1"],
+.reduced-motion [class*="animate-stagger-2"],
+.reduced-motion [class*="animate-stagger-3"],
+.reduced-motion [class*="animate-stagger-4"] {
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+  transition-property: none !important;
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-name: none !important;
+  animation-play-state: paused !important;
+}
+
+/* Disable hover scale and button press transforms */
+.reduced-motion .hover-scale:hover {
+  transform: scale(1) !important;
+  transition-duration: 0.01ms !important;
+}
+
+.reduced-motion .button-press:active {
+  transform: scale(1) !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Disable all hover transitions and animations */
+.reduced-motion *:hover {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-name: none !important;
+}
+
+/* Respect system preference for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    animation-name: none !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
     scroll-behavior: auto !important;
+  }
+
+  [class*="transition"],
+  [class*="animate-"],
+  [class*="duration-"],
+  [class*="delay-"],
+  .hover-scale,
+  .button-press {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-name: none !important;
+  }
+
+  .hover-scale:hover {
+    transform: scale(1) !important;
+  }
+
+  .button-press:active {
+    transform: scale(1) !important;
   }
 }
 
@@ -134,6 +216,141 @@ textarea:focus-visible {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Animations - Respect reduced motion preference */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Animation utility classes */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.animate-slide-in-down {
+  animation: slideInDown 0.5s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.6s ease-out;
+}
+
+/* Stagger animation delays for lists */
+.animate-stagger-1 {
+  animation-delay: 0.1s;
+}
+
+.animate-stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.animate-stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.animate-stagger-4 {
+  animation-delay: 0.4s;
+}
+
+/* Smooth hover scale effect */
+.hover-scale {
+  transition: transform 0.2s ease-out;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-scale:active {
+  transform: scale(0.98);
+}
+
+/* Smooth button press effect */
+.button-press {
+  transition: transform 0.1s ease-out;
+}
+
+.button-press:active {
+  transform: scale(0.95);
+}
+
+/* Ensure reduced motion overrides hover and button effects */
+.reduced-motion .hover-scale,
+.reduced-motion .hover-scale:hover,
+.reduced-motion .hover-scale:active {
+  transform: scale(1) !important;
+  transition: none !important;
+}
+
+.reduced-motion .button-press,
+.reduced-motion .button-press:hover,
+.reduced-motion .button-press:active {
+  transform: scale(1) !important;
+  transition: none !important;
 }
 
 /* Ensure sufficient color contrast */

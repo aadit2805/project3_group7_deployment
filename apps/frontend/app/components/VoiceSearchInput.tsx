@@ -152,9 +152,9 @@ export default function VoiceSearchInput({
             disabled={disabled}
             className={`absolute right-2 p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
               isListening
-                ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
+                ? 'bg-red-500 text-white hover:bg-red-600'
                 : 'bg-blue-500 text-white hover:bg-blue-600'
-            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${isListening ? 'animate-pulse' : ''}`}
             aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
             aria-pressed={isListening}
           >

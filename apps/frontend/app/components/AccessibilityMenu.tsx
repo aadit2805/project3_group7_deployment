@@ -69,7 +69,7 @@ export default function AccessibilityMenu() {
         <div
           ref={panelRef}
           id="accessibility-panel"
-          className="absolute bottom-16 right-0 bg-white border border-gray-300 rounded-lg shadow-xl p-6 w-80"
+          className="absolute bottom-16 right-0 bg-white border border-gray-300 rounded-lg shadow-xl p-6 w-80 animate-slide-in-up"
           role="dialog"
           aria-label="Accessibility settings panel"
           aria-modal="true"
