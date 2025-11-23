@@ -272,15 +272,15 @@ const CashierInterfaceContent = () => {
               <div
                 key={mealType.meal_type_id}
                 onClick={() => handleSelectMealType(mealType)}
-                className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                className="bg-[#D61927] rounded-lg shadow-md p-6 cursor-pointer border-2 border-white/30 hover:border-white hover:shadow-xl hover:bg-[#B81520] transition-all duration-300"
               >
-                <h2 className="text-2xl font-bold mb-2">
+                <h2 className="text-2xl font-bold mb-2 text-white">
                   {translatedMealTypes[mealType.meal_type_id] || mealType.meal_type_name}
                 </h2>
-                <p className="text-gray-700">{t.price}: ${mealType.meal_type_price.toFixed(2)}</p>
-                <p className="text-gray-700">{t.entrees}: {mealType.entree_count}</p>
-                <p className="text-gray-700">{t.sides}: {mealType.side_count}</p>
-                {mealType.drink_size && <p className="text-gray-700">{t.drink}: {mealType.drink_size}</p>}
+                <p className="text-white">{t.price}: ${mealType.meal_type_price.toFixed(2)}</p>
+                <p className="text-white">{t.entrees}: {mealType.entree_count}</p>
+                <p className="text-white">{t.sides}: {mealType.side_count}</p>
+                {mealType.drink_size && <p className="text-white">{t.drink}: {mealType.drink_size}</p>}
               </div>
             ))}
           </div>
@@ -330,23 +330,26 @@ const CashierInterfaceContent = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filterMenuItems(menuItems.filter((item) => item.item_type === 'entree'))
-                .map((item) => (
-                  <div
-                    key={item.menu_item_id}
-                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${
-                      selectedEntrees.some((e) => e.menu_item_id === item.menu_item_id)
-                        ? 'border-blue-500'
-                        : 'border-gray-200'
-                    } ${!item.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={() => item.is_available && handleSelectItem(item, 'entree')}
-                  >
-                    <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
-                    <p className="text-gray-700">{t.upcharge}: ${item.upcharge.toFixed(2)}</p>
-                    {!item.is_available && (
-                      <p className="text-red-500 font-semibold mt-2">{t.unavailable}</p>
-                    )}
-                  </div>
-                ))}
+                .map((item) => {
+                  const isSelected = selectedEntrees.some((e) => e.menu_item_id === item.menu_item_id);
+                  return (
+                    <div
+                      key={item.menu_item_id}
+                      className={`rounded-lg shadow-md p-6 cursor-pointer border-2 transition-all duration-300 ${
+                        isSelected
+                          ? 'bg-black border-white border-4 shadow-2xl ring-4 ring-white/50'
+                          : 'bg-[#D61927] border-white/50 hover:border-white hover:shadow-xl hover:bg-[#B81520]'
+                      } ${!item.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => item.is_available && handleSelectItem(item, 'entree')}
+                    >
+                      <h3 className="text-xl font-bold mb-2 text-white">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
+                      <p className="text-white">{t.upcharge}: ${item.upcharge.toFixed(2)}</p>
+                      {!item.is_available && (
+                        <p className="text-white font-semibold mt-2">{t.unavailable}</p>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </section>
 
@@ -356,23 +359,26 @@ const CashierInterfaceContent = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filterMenuItems(menuItems.filter((item) => item.item_type === 'side'))
-                .map((item) => (
-                  <div
-                    key={item.menu_item_id}
-                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${
-                      selectedSides.some((s) => s.menu_item_id === item.menu_item_id)
-                        ? 'border-blue-500'
-                        : 'border-gray-200'
-                    } ${!item.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={() => item.is_available && handleSelectItem(item, 'side')}
-                  >
-                    <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
-                    <p className="text-gray-700">{t.upcharge}: ${item.upcharge.toFixed(2)}</p>
-                    {!item.is_available && (
-                      <p className="text-red-500 font-semibold mt-2">{t.unavailable}</p>
-                    )}
-                  </div>
-                ))}
+                .map((item) => {
+                  const isSelected = selectedSides.some((s) => s.menu_item_id === item.menu_item_id);
+                  return (
+                    <div
+                      key={item.menu_item_id}
+                      className={`rounded-lg shadow-md p-6 cursor-pointer border-2 transition-all duration-300 ${
+                        isSelected
+                          ? 'bg-black border-white border-4 shadow-2xl ring-4 ring-white/50'
+                          : 'bg-[#D61927] border-white/50 hover:border-white hover:shadow-xl hover:bg-[#B81520]'
+                      } ${!item.is_available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => item.is_available && handleSelectItem(item, 'side')}
+                    >
+                      <h3 className="text-xl font-bold mb-2 text-white">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
+                      <p className="text-white">{t.upcharge}: ${item.upcharge.toFixed(2)}</p>
+                      {!item.is_available && (
+                        <p className="text-white font-semibold mt-2">{t.unavailable}</p>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </section>
 
