@@ -21,6 +21,39 @@ router.get('/menu-items', async (_req: Request, res: Response) => {
   }
 });
 
+// Helper function to check if current time is within availability window
+function isWithinAvailabilityWindow(
+  startTime: string | null | undefined,
+  endTime: string | null | undefined
+): boolean {
+  // If no time restrictions are set, always available
+  if (!startTime || !endTime) {
+    return true;
+  }
+
+  // Parse time strings (HH:mm:ss format from DB or HH:mm from input)
+  const parseTime = (timeStr: string): number => {
+    const parts = timeStr.split(':');
+    const hours = parseInt(parts[0] || '0', 10);
+    const minutes = parseInt(parts[1] || '0', 10);
+    return hours * 60 + minutes; // Convert to minutes since midnight
+  };
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const startMinutes = parseTime(startTime);
+  const endMinutes = parseTime(endTime);
+
+  // Handle midnight crossing (e.g., 22:00 to 02:00)
+  if (startMinutes > endMinutes) {
+    // Window crosses midnight (e.g., 22:00 to 02:00)
+    return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+  } else {
+    // Normal window within same day (e.g., 08:00 to 18:00)
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  }
+}
+
 // GET /api/prisma/menu-items/available - Get only available menu items
 router.get('/menu-items/available', async (_req: Request, res: Response) => {
   try {
@@ -28,7 +61,11 @@ router.get('/menu-items/available', async (_req: Request, res: Response) => {
       where: { is_available: true },
       orderBy: { name: 'asc' },
     });
-    return res.json({ success: true, data: availableItems });
+    // Filter by time-based availability
+    const filteredItems = availableItems.filter((item) =>
+      isWithinAvailabilityWindow(item.availability_start_time, item.availability_end_time)
+    );
+    return res.json({ success: true, data: filteredItems });
   } catch (error) {
     return res.status(500).json({ success: false, error: (error as Error).message });
   }
@@ -159,6 +196,7 @@ router.post('/menu-items', async (req: Request, res: Response) => {
     });
     const newId = (lastItem?.menu_item_id || 0) + 1;
 
+    const { availability_start_time, availability_end_time } = req.body;
     const newItem = await prisma.menu_items.create({
       data: {
         menu_item_id: newId,
@@ -166,6 +204,8 @@ router.post('/menu-items', async (req: Request, res: Response) => {
         upcharge: upcharge || 0,
         is_available: is_available !== undefined ? is_available : true,
         item_type,
+        availability_start_time: availability_start_time || null,
+        availability_end_time: availability_end_time || null,
       },
     });
 
@@ -179,7 +219,7 @@ router.post('/menu-items', async (req: Request, res: Response) => {
 router.patch('/menu-items/:id/availability', async (req: Request, res: Response) => {
   try {
     const menuItemId = parseInt(req.params.id);
-    const { is_available } = req.body;
+    const { is_available, availability_start_time, availability_end_time } = req.body;
 
     if (typeof is_available !== 'boolean') {
       return res.status(400).json({
@@ -188,9 +228,17 @@ router.patch('/menu-items/:id/availability', async (req: Request, res: Response)
       });
     }
 
+    const updateData: any = { is_available };
+    if (availability_start_time !== undefined) {
+      updateData.availability_start_time = availability_start_time || null;
+    }
+    if (availability_end_time !== undefined) {
+      updateData.availability_end_time = availability_end_time || null;
+    }
+
     const updatedItem = await prisma.menu_items.update({
       where: { menu_item_id: menuItemId },
-      data: { is_available },
+      data: updateData,
     });
 
     return res.json({ success: true, data: updatedItem });

@@ -8,6 +8,8 @@ interface MenuItem {
   upcharge: number;
   is_available: boolean;
   item_type: string;
+  availability_start_time?: string | null;
+  availability_end_time?: string | null;
 }
 
 interface MenuItemsListProps {
@@ -49,11 +51,19 @@ export default function MenuItemsList({ filter }: MenuItemsListProps) {
 
   const handleEdit = (item: MenuItem) => {
     setEditingId(item.menu_item_id);
+    // Convert time from HH:mm:ss to HH:mm format for time input
+    const formatTimeForInput = (time: string | null | undefined) => {
+      if (!time) return '';
+      // If time is in HH:mm:ss format, convert to HH:mm
+      return time.substring(0, 5);
+    };
     setEditForm({
       name: item.name,
       upcharge: item.upcharge,
       is_available: item.is_available,
       item_type: item.item_type,
+      availability_start_time: formatTimeForInput(item.availability_start_time),
+      availability_end_time: formatTimeForInput(item.availability_end_time),
     });
   };
 
@@ -85,6 +95,12 @@ export default function MenuItemsList({ filter }: MenuItemsListProps) {
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditForm({});
+  };
+
+  // Helper function to format time for display
+  const formatTime = (time: string | null | undefined) => {
+    if (!time) return '';
+    return time.substring(0, 5); // Extract HH:mm from HH:mm:ss
   };
 
   const toggleAvailability = async (item: MenuItem) => {
@@ -167,6 +183,9 @@ export default function MenuItemsList({ filter }: MenuItemsListProps) {
                   Available
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Availability Window
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -240,6 +259,57 @@ export default function MenuItemsList({ filter }: MenuItemsListProps) {
                       >
                         {item.is_available ? 'Available' : 'Unavailable'}
                       </button>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {editingId === item.menu_item_id ? (
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Start:</label>
+                          <input
+                            type="time"
+                            value={editForm.availability_start_time || ''}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, availability_start_time: e.target.value })
+                            }
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">End:</label>
+                          <input
+                            type="time"
+                            value={editForm.availability_end_time || ''}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, availability_end_time: e.target.value })
+                            }
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                          />
+                        </div>
+                        <button
+                          onClick={() =>
+                            setEditForm({
+                              ...editForm,
+                              availability_start_time: '',
+                              availability_end_time: '',
+                            })
+                          }
+                          className="text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-xs">
+                        {item.availability_start_time && item.availability_end_time ? (
+                          <span>
+                            {item.availability_start_time.substring(0, 5)} -{' '}
+                            {item.availability_end_time.substring(0, 5)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic">No time restriction</span>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

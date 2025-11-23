@@ -73,13 +73,15 @@ model meal_types {
 }
 
 model menu_items {
-  menu_item_id Int           @id
-  name         String?       @db.VarChar(255)
-  upcharge     Float?
-  is_available Boolean?
-  item_type    String?       @db.VarChar(50)
-  inventory    inventory[]
-  meal_detail  meal_detail[]
+  menu_item_id           Int       @id
+  name                   String?   @db.VarChar(255)
+  upcharge               Float?
+  is_available           Boolean?
+  item_type              String?   @db.VarChar(50)
+  availability_start_time String?  @db.VarChar(10)
+  availability_end_time   String?  @db.VarChar(10)
+  inventory              inventory[]
+  meal_detail            meal_detail[]
 }
 
 model non_food_inventory {

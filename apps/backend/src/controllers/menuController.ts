@@ -8,12 +8,64 @@ interface MenuItem {
   upcharge: number;
   is_available: boolean;
   item_type: string;
+  availability_start_time?: string | null;
+  availability_end_time?: string | null;
+}
+
+// Helper function to check if current time is within availability window
+function isWithinAvailabilityWindow(
+  startTime: string | null | undefined,
+  endTime: string | null | undefined
+): boolean {
+  // If no time restrictions are set, always available
+  if (!startTime || !endTime) {
+    return true;
+  }
+
+  // Parse time strings (HH:mm:ss format from DB or HH:mm from input)
+  const parseTime = (timeStr: string): number => {
+    const parts = timeStr.split(':');
+    const hours = parseInt(parts[0] || '0', 10);
+    const minutes = parseInt(parts[1] || '0', 10);
+    return hours * 60 + minutes; // Convert to minutes since midnight
+  };
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const startMinutes = parseTime(startTime);
+  const endMinutes = parseTime(endTime);
+
+  // Handle midnight crossing (e.g., 22:00 to 02:00)
+  if (startMinutes > endMinutes) {
+    // Window crosses midnight (e.g., 22:00 to 02:00)
+    return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+  } else {
+    // Normal window within same day (e.g., 08:00 to 18:00)
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  }
+}
+
+// Helper function to filter menu items by time-based availability
+function filterByTimeAvailability(items: MenuItem[]): MenuItem[] {
+  return items.filter((item) => {
+    // If is_available is false, item is not available regardless of time
+    if (!item.is_available) {
+      return false;
+    }
+
+    // Check time-based availability
+    return isWithinAvailabilityWindow(
+      item.availability_start_time,
+      item.availability_end_time
+    );
+  });
 }
 
 // Get all menu items
 export const getMenuItems = async (req: Request, res: Response): Promise<void> => {
   try {
-    let query = 'SELECT menu_item_id, name, upcharge, is_available, item_type FROM menu_items';
+    let query =
+      'SELECT menu_item_id, name, upcharge, is_available, item_type, availability_start_time, availability_end_time FROM menu_items';
     const queryParams: (string | boolean)[] = [];
 
     if (req.query.is_available === 'true') {
@@ -24,7 +76,14 @@ export const getMenuItems = async (req: Request, res: Response): Promise<void> =
     query += ' ORDER BY menu_item_id';
 
     const result = await pool.query<MenuItem>(query, queryParams);
-    res.status(200).json(result.rows);
+    let items = result.rows;
+
+    // If filtering by availability, also filter by time-based availability
+    if (req.query.is_available === 'true') {
+      items = filterByTimeAvailability(items);
+    }
+
+    res.status(200).json(items);
   } catch (error) {
     console.error('Error fetching menu items:', error);
     res.status(500).json({
@@ -38,9 +97,11 @@ export const getMenuItems = async (req: Request, res: Response): Promise<void> =
 export const getAvailableMenuItems = async (_req: Request, res: Response): Promise<void> => {
   try {
     const result = await pool.query<MenuItem>(
-      'SELECT menu_item_id, name, upcharge, is_available, item_type FROM menu_items WHERE is_available = true ORDER BY menu_item_id'
+      'SELECT menu_item_id, name, upcharge, is_available, item_type, availability_start_time, availability_end_time FROM menu_items WHERE is_available = true ORDER BY menu_item_id'
     );
-    res.status(200).json(result.rows);
+    // Filter by time-based availability
+    const filteredItems = filterByTimeAvailability(result.rows);
+    res.status(200).json(filteredItems);
   } catch (error) {
     console.error('Error fetching available menu items:', error);
     res.status(500).json({
@@ -55,7 +116,7 @@ export const getMenuItemsByType = async (req: Request, res: Response): Promise<v
   try {
     const { type } = req.params;
     const result = await pool.query<MenuItem>(
-      'SELECT menu_item_id, name, upcharge, is_available, item_type FROM menu_items WHERE item_type = $1 ORDER BY menu_item_id',
+      'SELECT menu_item_id, name, upcharge, is_available, item_type, availability_start_time, availability_end_time FROM menu_items WHERE item_type = $1 ORDER BY menu_item_id',
       [type]
     );
     res.status(200).json(result.rows);
@@ -73,7 +134,7 @@ export const getMenuItemById = async (req: Request, res: Response): Promise<void
   try {
     const { id } = req.params;
     const result = await pool.query<MenuItem>(
-      'SELECT menu_item_id, name, upcharge, is_available, item_type FROM menu_items WHERE menu_item_id = $1',
+      'SELECT menu_item_id, name, upcharge, is_available, item_type, availability_start_time, availability_end_time FROM menu_items WHERE menu_item_id = $1',
       [id]
     );
 
@@ -102,6 +163,8 @@ export const getMenuItemsWithInventory = async (_req: Request, res: Response): P
         m.upcharge, 
         m.is_available, 
         m.item_type,
+        m.availability_start_time,
+        m.availability_end_time,
         i.stock,
         i.reorder
       FROM menu_items m
@@ -121,7 +184,18 @@ export const getMenuItemsWithInventory = async (_req: Request, res: Response): P
 // Create a new menu item
 export const createMenuItem = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, upcharge, is_available, item_type, menu_item_id, stock, reorder, storage } = req.body;
+    const {
+      name,
+      upcharge,
+      is_available,
+      item_type,
+      menu_item_id,
+      stock,
+      reorder,
+      storage,
+      availability_start_time,
+      availability_end_time,
+    } = req.body;
 
     // Validation
     if (!name || !item_type || stock === undefined || reorder === undefined || !storage) {
@@ -166,15 +240,17 @@ export const createMenuItem = async (req: Request, res: Response): Promise<void>
 
     // Insert new menu item
     const result = await pool.query<MenuItem>(
-      `INSERT INTO menu_items (menu_item_id, name, upcharge, is_available, item_type)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING menu_item_id, name, upcharge, is_available, item_type`,
+      `INSERT INTO menu_items (menu_item_id, name, upcharge, is_available, item_type, availability_start_time, availability_end_time)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING menu_item_id, name, upcharge, is_available, item_type, availability_start_time, availability_end_time`,
       [
         itemId,
         name,
         upcharge || 0,
         is_available !== undefined ? is_available : true,
         item_type.toLowerCase(),
+        availability_start_time || null,
+        availability_end_time || null,
       ]
     );
 
@@ -216,7 +292,14 @@ export const createMenuItem = async (req: Request, res: Response): Promise<void>
 export const updateMenuItem = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, upcharge, is_available, item_type } = req.body;
+    const {
+      name,
+      upcharge,
+      is_available,
+      item_type,
+      availability_start_time,
+      availability_end_time,
+    } = req.body;
 
     // Build update query dynamically
     const updates: string[] = [];
@@ -247,6 +330,14 @@ export const updateMenuItem = async (req: Request, res: Response): Promise<void>
       updates.push(`item_type = $${paramCount++}`);
       values.push(item_type.toLowerCase());
     }
+    if (availability_start_time !== undefined) {
+      updates.push(`availability_start_time = $${paramCount++}`);
+      values.push(availability_start_time || null);
+    }
+    if (availability_end_time !== undefined) {
+      updates.push(`availability_end_time = $${paramCount++}`);
+      values.push(availability_end_time || null);
+    }
 
     if (updates.length === 0) {
       res.status(400).json({
@@ -261,7 +352,7 @@ export const updateMenuItem = async (req: Request, res: Response): Promise<void>
       `UPDATE menu_items 
        SET ${updates.join(', ')}
        WHERE menu_item_id = $${paramCount}
-       RETURNING menu_item_id, name, upcharge, is_available, item_type`,
+       RETURNING menu_item_id, name, upcharge, is_available, item_type, availability_start_time, availability_end_time`,
       values
     );
 

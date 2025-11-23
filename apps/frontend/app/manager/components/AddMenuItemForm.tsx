@@ -8,6 +8,8 @@ interface MenuItem {
   upcharge: number;
   is_available: boolean;
   item_type: string;
+  availability_start_time?: string | null;
+  availability_end_time?: string | null;
 }
 
 interface AddMenuItemFormProps {
@@ -24,6 +26,8 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
     stock: '0',
     reorder: false,
     storage: 'pantry',
+    availability_start_time: '',
+    availability_end_time: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +56,14 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
         payload.menu_item_id = parseInt(formData.menu_item_id);
       }
 
+      // Include time-based availability if provided
+      if (formData.availability_start_time.trim()) {
+        payload.availability_start_time = formData.availability_start_time;
+      }
+      if (formData.availability_end_time.trim()) {
+        payload.availability_end_time = formData.availability_end_time;
+      }
+
       const response = await fetch(`${backendUrl}/api/menu-items`, {
         method: 'POST',
         headers: {
@@ -78,6 +90,8 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
         stock: '0',
         reorder: false,
         storage: 'pantry',
+        availability_start_time: '',
+        availability_end_time: '',
       });
 
       // Call onSuccess callback after a short delay
@@ -236,6 +250,58 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
           </select>
         </div>
 
+        <div className="border-t pt-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Time-Based Availability</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Set specific times when this item should be available. Leave empty to always show when
+            available.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="availability_start_time"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Start Time
+              </label>
+              <input
+                type="time"
+                id="availability_start_time"
+                value={formData.availability_start_time}
+                onChange={(e) =>
+                  setFormData({ ...formData, availability_start_time: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="mt-1 text-sm text-gray-500">When this item becomes available</p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="availability_end_time"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                End Time
+              </label>
+              <input
+                type="time"
+                id="availability_end_time"
+                value={formData.availability_end_time}
+                onChange={(e) =>
+                  setFormData({ ...formData, availability_end_time: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="mt-1 text-sm text-gray-500">When this item stops being available</p>
+            </div>
+          </div>
+          <p className="mt-2 text-sm text-gray-500 italic">
+            Note: Both start and end times must be set together for time-based availability to work.
+            Items will only appear when the current time is within the specified window.
+          </p>
+        </div>
+
         <div className="flex gap-4">
           <button
             type="submit"
@@ -256,6 +322,8 @@ export default function AddMenuItemForm({ onSuccess }: AddMenuItemFormProps) {
                 stock: '0',
                 reorder: false,
                 storage: 'pantry',
+                availability_start_time: '',
+                availability_end_time: '',
               });
               setError(null);
             }}
