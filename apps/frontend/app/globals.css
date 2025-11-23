@@ -80,6 +80,7 @@
 }
 
 /* Disable custom animation classes with higher specificity */
+/* reduced motion toggle */
 .reduced-motion .hover-scale,
 .reduced-motion .button-press,
 .reduced-motion .animate-fade-in,
