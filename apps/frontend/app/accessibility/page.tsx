@@ -89,56 +89,6 @@ export default function AccessibilityPage() {
             </ul>
           </section>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-3 text-gray-900">
-              Known Limitations
-            </h2>
-            <p className="mb-3">
-              Despite our best efforts, some areas may not be fully accessible. We are 
-              actively working to address any limitations and welcome your feedback to 
-              help us improve.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-3 text-gray-900">
-              Feedback
-            </h2>
-            <p className="mb-3">
-              We welcome your feedback on the accessibility of our ordering system. If you 
-              encounter any accessibility barriers or have suggestions for improvement, 
-              please contact us:
-            </p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Email: accessibility@example.com</li>
-              <li>Phone: (123) 456-7890</li>
-            </ul>
-            <p className="mt-3">
-              We aim to respond to accessibility feedback within 2 business days.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-3 text-gray-900">
-              Technical Specifications
-            </h2>
-            <p className="mb-3">
-              This website is built using:
-            </p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>React and Next.js for modern, accessible component architecture</li>
-              <li>Semantic HTML5 for proper document structure</li>
-              <li>WAI-ARIA for enhanced accessibility semantics</li>
-              <li>CSS for responsive and accessible styling</li>
-            </ul>
-          </section>
-
-          <section className="mt-8 pt-6 border-t border-gray-300">
-            <p className="text-sm text-gray-600">
-              <strong>Last Updated:</strong> November 21, 2025
-            </p>
-          </section>
-
           <div className="mt-8">
             <Link 
               href="/"
