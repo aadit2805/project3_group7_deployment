@@ -260,7 +260,7 @@ const CashierInterfaceContent = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ order_items: order }),
+        body: JSON.stringify({ order_items: order, rush_order: false }),
       });
 
       if (response.ok) {

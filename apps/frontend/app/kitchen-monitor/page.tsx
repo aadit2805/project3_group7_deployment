@@ -21,6 +21,7 @@ interface KitchenOrder {
   datetime: string;
   order_status: string;
   staff_username: string | null;
+  rush_order?: boolean;
   meals: Meal[];
 }
 
@@ -181,8 +182,11 @@ export default function KitchenMonitor() {
               className="bg-white rounded-lg shadow-md border-2 border-gray-300 flex flex-col h-full"
             >
               {/* Order Header */}
-              <div className="bg-gray-800 text-white p-3 rounded-t-lg">
+              <div className={`text-white p-3 rounded-t-lg ${order.rush_order ? 'bg-red-600' : 'bg-gray-800'}`}>
                 <h2 className="font-bold text-lg">Order #{order.order_id}</h2>
+                {order.rush_order && (
+                  <p className="text-lg font-bold text-yellow-300 mb-1">RUSH ORDER</p>
+                )}
                 <p className="text-sm text-gray-300">{order.customer_name}</p>
                 {order.staff_username && (
                   <p className="text-xs text-gray-400">by {order.staff_username}</p>

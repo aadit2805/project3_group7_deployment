@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useRouter } from 'next/navigation';
 import { useTranslatedTexts } from '@/app/hooks/useTranslation';
@@ -8,6 +8,7 @@ import { useTranslatedTexts } from '@/app/hooks/useTranslation';
 const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void }) => {
   const context = useContext(OrderContext);
   const router = useRouter();
+  const [isRushOrder, setIsRushOrder] = useState<boolean>(false);
 
   // Define all text labels that need translation
   const textLabels = [
@@ -24,6 +25,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
     'Order submitted successfully!',
     'Failed to submit order.',
     'An error occurred while submitting the order.',
+    'Mark as Rush Order',
   ];
 
   const { translatedTexts, isTranslating } = useTranslatedTexts(textLabels);
@@ -43,6 +45,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
     successMessage: translatedTexts[10] || 'Order submitted successfully!',
     failMessage: translatedTexts[11] || 'Failed to submit order.',
     errorMessage: translatedTexts[12] || 'An error occurred while submitting the order.',
+    markAsRushOrder: translatedTexts[13] || 'Mark as Rush Order',
   };
 
   if (!context) {
@@ -72,7 +75,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ order_items: order }),
+        body: JSON.stringify({ order_items: order, rush_order: isRushOrder }),
       });
 
               if (response.ok) {
@@ -80,6 +83,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
                 alert(t.successMessage);
 
                 setOrder([]);
+                setIsRushOrder(false);
 
                 localStorage.removeItem('order');
 
@@ -94,7 +98,9 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
                 }
 
               } else {
-        alert(t.failMessage);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Order submission failed:', errorData);
+        alert(`${t.failMessage} ${errorData.error ? `\nError: ${errorData.error}` : ''}`);
       }
     } catch (error) {
       console.error('Error submitting order:', error);
@@ -187,6 +193,19 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
             <p className="text-2xl font-bold mb-4" role="status" aria-live="polite">
               {t.total}: <span aria-label={`Total price ${totalPrice.toFixed(2)} dollars`}>${totalPrice.toFixed(2)}</span>
             </p>
+            <div className="flex items-center justify-end gap-3 mb-4">
+              <input
+                type="checkbox"
+                id="rush-order"
+                checked={isRushOrder}
+                onChange={(e) => setIsRushOrder(e.target.checked)}
+                className="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                aria-label="Mark order as rush order"
+              />
+              <label htmlFor="rush-order" className="text-lg font-semibold text-gray-700 cursor-pointer">
+                {t.markAsRushOrder}
+              </label>
+            </div>
             <button
               onClick={handleSubmitOrder}
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-xl mt-4 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"

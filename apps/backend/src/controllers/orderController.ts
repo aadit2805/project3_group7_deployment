@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
 
+const rushOrderCache = new Map<number, boolean>();
+
 export const createOrder = async (req: Request, res: Response) => {
-  const { order_items, customer_name } = req.body; // Added customer_name
+  const { order_items, customer_name, rush_order } = req.body; // Added customer_name and rush_order
 
   if (!order_items || !Array.isArray(order_items) || order_items.length === 0) {
     return res.status(400).json({ success: false, error: 'Order items are required' });
@@ -33,9 +35,13 @@ export const createOrder = async (req: Request, res: Response) => {
     // Insert order with a temporary price (0)
     const orderResult = await client.query(
       'INSERT INTO "Order" (order_id, price, order_status, staff_id, datetime, customer_name) VALUES ($1, $2, $3, $4, NOW(), $5) RETURNING order_id',
-      [newOrderId, 0, 'pending', 1, customer_name || null] // Added customer_name
+      [newOrderId, 0, 'pending', 1, customer_name || null]
     );
     const orderId = orderResult.rows[0].order_id;
+
+    if (rush_order === true) {
+      rushOrderCache.set(orderId, true);
+    }
 
     let totalPrice = 0; // Initialize total price
 
@@ -203,12 +209,15 @@ export const getKitchenOrders = async (_req: Request, res: Response) => {
         });
       }
 
+      const isRushOrder = rushOrderCache.get(orderRow.order_id) || false;
+
       orders.push({
         order_id: orderRow.order_id,
         customer_name: orderRow.customer_name || 'Guest',
         datetime: orderRow.datetime,
         order_status: orderRow.order_status || 'pending',
         staff_username: orderRow.staff_username,
+        rush_order: isRushOrder,
         meals,
       });
     }
@@ -293,6 +302,10 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     await client.query('COMMIT');
 
+    if (status === 'completed' || status === 'addressed') {
+      rushOrderCache.delete(parseInt(orderId));
+    }
+
     return res.status(200).json({
       success: true,
       data: {
@@ -370,6 +383,8 @@ export const markOrderAddressed = async (req: Request, res: Response) => {
     }
 
     await client.query('COMMIT');
+
+    rushOrderCache.delete(parseInt(orderId));
 
     return res.status(200).json({
       success: true,
