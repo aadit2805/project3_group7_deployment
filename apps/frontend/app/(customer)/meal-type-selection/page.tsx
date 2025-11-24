@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { OrderContext } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
 
@@ -31,6 +32,7 @@ const MealTypeSelection = () => {
     'Create your own meal',
     'Drinks',
     'Select a beverage',
+    'Logout', // New
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -46,6 +48,7 @@ const MealTypeSelection = () => {
     createYourOwn: translatedTexts[7] || 'Create your own meal',
     drinks: translatedTexts[8] || 'Drinks',
     selectBeverage: translatedTexts[9] || 'Select a beverage',
+    logout: translatedTexts[10] || 'Logout', // New
   };
 
   useEffect(() => {
@@ -87,41 +90,73 @@ const MealTypeSelection = () => {
 
   const { order } = context;
   const itemCount = order.length;
+  const router = useRouter(); // Import useRouter for handleLogout
+
+  const handleLogout = () => {
+    localStorage.removeItem('customerToken');
+    localStorage.removeItem('customerId');
+    // Optionally remove other customer-related data if stored
+    router.push('/rewards-login'); // Redirect to login page
+  };
 
   return (
     <div className="container mx-auto px-4">
       <header className="flex justify-between items-center my-8">
         <h1 className="text-4xl font-bold">{t.title}</h1>
-        <Link
-          href="/shopping-cart"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          aria-label={`View shopping cart${itemCount > 0 ? ` with ${itemCount} item${itemCount !== 1 ? 's' : ''}` : ', currently empty'}`}
-        >
-          <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            ></path>
-          </svg>
-          <span>{t.shoppingCart}</span>
-          {itemCount > 0 && (
-            <span 
-              className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm"
-              aria-label={`${itemCount} items in cart`}
+        <div className="flex space-x-4"> {/* Container for multiple links/buttons */}
+          {localStorage.getItem('customerToken') && ( // Only show if logged in
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
             >
-              {itemCount}
-            </span>
+              <svg // Example SVG for logout
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                ></path>
+              </svg>
+              {t.logout}
+            </button>
           )}
-        </Link>
+          <Link
+            href="/shopping-cart"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label={`View shopping cart${itemCount > 0 ? ` with ${itemCount} item${itemCount !== 1 ? 's' : ''}` : ', currently empty'}`}
+          >
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+              ></path>
+            </svg>
+            <span>{t.shoppingCart}</span>
+            {itemCount > 0 && (
+              <span 
+                className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm"
+                aria-label={`${itemCount} items in cart`}
+              >
+                {itemCount}
+              </span>
+            )}
+          </Link>
+        </div>
       </header>
       <nav aria-label="Meal options">
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" role="list">

@@ -18,8 +18,8 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
     // Check if customerToken exists in localStorage
     const customerToken = localStorage.getItem('customerToken');
 
-    // If no token and not already on the rewards-login page, redirect to rewards-login
-    if (!customerToken && pathname !== '/rewards-login') {
+    // If no token and not already on the rewards-login page, and not on a guest-accessible page, redirect to rewards-login
+    if (!customerToken && pathname !== '/rewards-login' && pathname !== '/customer-kiosk') {
       router.push('/rewards-login');
     }
   }, [pathname, router]); // Re-run effect if pathname or router changes

@@ -56,7 +56,7 @@ function RewardsLoginContent() {
     localStorage.removeItem('customerId');
     localStorage.removeItem('customerEmail');
     localStorage.removeItem('customerPhone');
-    router.push('/(customer)/customer-kiosk'); // Redirect to customer kiosk as guest
+    router.push('/customer-kiosk'); // Redirect to customer kiosk as guest
   };
 
   return (
