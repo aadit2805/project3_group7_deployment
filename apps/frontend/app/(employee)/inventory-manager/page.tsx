@@ -130,7 +130,7 @@ const InventoryManager = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Inventory Manager</h1>
-      <div className="mb-4">
+      <div className="mb-4 flex gap-2">
         <Link href="/dashboard">
           <button 
             className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center"
@@ -154,6 +154,11 @@ const InventoryManager = () => {
               </svg>
             </Tooltip>
             Back to Dashboard
+          </button>
+        </Link>
+        <Link href="/kitchen-monitor">
+          <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Kitchen Monitor
           </button>
         </Link>
       </div>

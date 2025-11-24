@@ -16,6 +16,7 @@ export default function ActiveOrdersList() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [kitchenOrderCount, setKitchenOrderCount] = useState<number>(0);
 
   const fetchActiveOrders = useCallback(async () => {
     try {
@@ -46,12 +47,34 @@ export default function ActiveOrdersList() {
     }
   }, []);
 
+  const fetchKitchenOrderCount = useCallback(async () => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/api/orders/kitchen`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setKitchenOrderCount(result.data.length);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching kitchen order count:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchActiveOrders();
+    fetchKitchenOrderCount();
     // Refresh orders every 10 seconds to keep data current
-    const interval = setInterval(fetchActiveOrders, 10000);
+    const interval = setInterval(() => {
+      fetchActiveOrders();
+      fetchKitchenOrderCount();
+    }, 10000);
     return () => clearInterval(interval);
-  }, [fetchActiveOrders]);
+  }, [fetchActiveOrders, fetchKitchenOrderCount]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -131,6 +154,14 @@ export default function ActiveOrdersList() {
           Refresh
         </button>
       </div>
+
+      {kitchenOrderCount > 12 && (
+        <div className="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+          <p className="text-yellow-800 font-semibold">
+            There is an unusually high ticket count in the kitchen. Staffing shifts might be recommended.
+          </p>
+        </div>
+      )}
 
       {orders.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
