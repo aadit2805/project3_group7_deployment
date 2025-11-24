@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
+import Tooltip from '@/app/components/Tooltip';
 
 const ShoppingCart = () => {
   const context = useContext(OrderContext);
@@ -201,7 +202,7 @@ const ShoppingCart = () => {
                 const mealName = translatedNames[`meal_${orderItem.mealType.meal_type_id}`] || orderItem.mealType.meal_type_name;
 
                 return (
-                  <li key={index} className="mb-4 pb-4 border-b border-gray-200 bg-white p-4 rounded">
+                  <li key={index} className={`mb-4 pb-4 border-b border-gray-200 bg-white p-4 rounded hover-scale transition-all duration-200 animate-fade-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}>
                     <div className="flex justify-between items-center">
                       <h2 className="text-2xl font-bold">
                         {mealName}
@@ -209,14 +210,14 @@ const ShoppingCart = () => {
                       <div role="group" aria-label={`Actions for ${mealName}`}>
                         <button
                           onClick={() => handleEditItem(index)}
-                          className="text-blue-500 hover:text-blue-700 font-bold mr-2 px-3 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          className="text-blue-500 hover:text-blue-700 font-bold mr-2 px-3 py-1 border border-blue-500 rounded button-press transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                           aria-label={`Edit ${mealName} item`}
                         >
                           {t.edit}
                         </button>
                         <button
                           onClick={() => handleRemoveFromOrder(index)}
-                          className="text-red-500 hover:text-red-700 font-bold px-3 py-1 border border-red-500 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                          className="text-red-500 hover:text-red-700 font-bold px-3 py-1 border border-red-500 rounded button-press transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                           aria-label={`Remove ${mealName} from cart`}
                         >
                           {t.remove}
@@ -282,7 +283,7 @@ const ShoppingCart = () => {
                 </p>
                 <button
                   onClick={handleSubmitOrder}
-                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl hover:shadow-lg button-press transition-all duration-200 animate-bounce-in focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                   aria-label={`Submit order with ${order.length} item${order.length !== 1 ? 's' : ''}, total ${totalPrice.toFixed(2)} dollars`}
                 >
                   {t.submitOrder}

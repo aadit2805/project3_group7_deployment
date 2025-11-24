@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
+import Tooltip from '@/app/components/Tooltip';
+import VoiceSearchInput from '@/app/components/VoiceSearchInput';
 
 interface MenuItem {
   menu_item_id: number;
@@ -42,6 +44,7 @@ const CustomerKioskContent = () => {
     'Upcharge',
     'Update Item',
     'Add to Order',
+    'Search menu items',
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -56,6 +59,7 @@ const CustomerKioskContent = () => {
     upcharge: translatedTexts[6] || 'Upcharge',
     updateItem: translatedTexts[7] || 'Update Item',
     addToOrder: translatedTexts[8] || 'Add to Order',
+    searchMenuItems: translatedTexts[9] || 'Search menu items',
   };
 
   if (!context) {
@@ -71,6 +75,7 @@ const CustomerKioskContent = () => {
   const [selectedEntrees, setSelectedEntrees] = useState<MenuItem[]>([]);
   const [selectedSides, setSelectedSides] = useState<MenuItem[]>([]);
   const [selectedDrink, setSelectedDrink] = useState<MenuItem | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     if (!mealTypeId) {
@@ -179,8 +184,28 @@ const CustomerKioskContent = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-4">
         <Link href="/meal-type-selection">
-          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-            ← {t.backToSelection}
+          <button 
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center"
+            aria-label={t.backToSelection}
+          >
+            <Tooltip text={t.backToSelection} position="bottom">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                ></path>
+              </svg>
+            </Tooltip>
+            {t.backToSelection}
           </button>
         </Link>
       </div>
@@ -193,21 +218,25 @@ const CustomerKioskContent = () => {
             <Link
               href="/shopping-cart"
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
+              aria-label={t.shoppingCart}
             >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
+              <Tooltip text={t.shoppingCart} position="bottom">
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  ></path>
+                </svg>
+              </Tooltip>
               {t.shoppingCart}
               {itemCount > 0 && (
                 <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm">
@@ -217,17 +246,32 @@ const CustomerKioskContent = () => {
             </Link>
           </div>
 
-          <section className="mb-10">
-            <h2 className="text-3xl font-semibold mb-4">
+          <section className="mb-10 animate-fade-in">
+            <h2 className="text-3xl font-semibold mb-4 animate-slide-in-down">
               {t.selectEntrees} ({selectedEntrees.length}/{selectedMealType.entree_count})
             </h2>
+            <div className="mb-4 animate-fade-in animate-stagger-1">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="entree-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {menuItems
-                .filter((item) => item.item_type === 'entree')
-                .map((item) => (
+                .filter((item) => {
+                  if (item.item_type !== 'entree') return false;
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
+                .map((item, index) => (
                   <div
                     key={item.menu_item_id}
-                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${selectedEntrees.some((e) => e.menu_item_id === item.menu_item_id) ? 'border-blue-500' : 'border-gray-200'}`}
+                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${selectedEntrees.some((e) => e.menu_item_id === item.menu_item_id) ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
                     onClick={() => handleSelectItem(item, 'entree')}
                   >
                     <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
@@ -237,17 +281,32 @@ const CustomerKioskContent = () => {
             </div>
           </section>
 
-          <section className="mb-10">
-            <h2 className="text-3xl font-semibold mb-4">
+          <section className="mb-10 animate-fade-in">
+            <h2 className="text-3xl font-semibold mb-4 animate-slide-in-down">
               {t.selectSides} ({selectedSides.length}/{selectedMealType.side_count})
             </h2>
+            <div className="mb-4 animate-fade-in animate-stagger-1">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="side-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {menuItems
-                .filter((item) => item.item_type === 'side')
-                .map((item) => (
+                .filter((item) => {
+                  if (item.item_type !== 'side') return false;
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
+                .map((item, index) => (
                   <div
                     key={item.menu_item_id}
-                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${selectedSides.some((s) => s.menu_item_id === item.menu_item_id) ? 'border-blue-500' : 'border-gray-200'}`}
+                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${selectedSides.some((s) => s.menu_item_id === item.menu_item_id) ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
                     onClick={() => handleSelectItem(item, 'side')}
                   >
                     <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
@@ -258,15 +317,30 @@ const CustomerKioskContent = () => {
           </section>
 
           {selectedMealType.drink_size !== 'none' && (
-            <section className="mb-10">
-              <h2 className="text-3xl font-semibold mb-4">{t.selectDrink} (1)</h2>
+            <section className="mb-10 animate-fade-in">
+              <h2 className="text-3xl font-semibold mb-4 animate-slide-in-down">{t.selectDrink} (1)</h2>
+              <div className="mb-4 animate-fade-in animate-stagger-1">
+                <VoiceSearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder={t.searchMenuItems}
+                  label={t.searchMenuItems}
+                  id="drink-search"
+                />
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {menuItems
-                  .filter((item) => item.item_type === 'drink')
-                  .map((item) => (
+                  .filter((item) => {
+                    if (item.item_type !== 'drink') return false;
+                    if (!searchQuery.trim()) return true;
+                    const searchLower = searchQuery.toLowerCase();
+                    const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                    return itemName.includes(searchLower);
+                  })
+                  .map((item, index) => (
                     <div
                       key={item.menu_item_id}
-                      className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 ${selectedDrink?.menu_item_id === item.menu_item_id ? 'border-blue-500' : 'border-gray-200'}`}
+                      className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${selectedDrink?.menu_item_id === item.menu_item_id ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
                       onClick={() => handleSelectItem(item, 'drink')}
                     >
                       <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
@@ -276,10 +350,10 @@ const CustomerKioskContent = () => {
             </section>
           )}
 
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 animate-fade-in animate-stagger-2">
             <button
               onClick={handleAddOrUpdateOrder}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-xl"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-xl hover:shadow-lg button-press transition-all duration-200 animate-bounce-in"
               disabled={
                 selectedMealType &&
                 (selectedEntrees.length !== selectedMealType.entree_count ||

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
+import Tooltip from '@/app/components/Tooltip';
 
 interface MenuItem {
   menu_item_id: number;
@@ -12,6 +13,8 @@ interface MenuItem {
   upcharge: number;
   is_available: boolean;
   item_type: string;
+  availability_start_time?: string | null;
+  availability_end_time?: string | null;
 }
 
 interface MealType {
@@ -155,7 +158,8 @@ const CashierInterfaceContent = () => {
           const mealTypeData: MealType = await mealTypeRes.json();
           setSelectedMealType(mealTypeData);
 
-          const menuItemsRes = await fetch(`${backendUrl}/api/menu-items`);
+          // Fetch menu items with time-based availability filtering (same as customer kiosk)
+          const menuItemsRes = await fetch(`${backendUrl}/api/menu-items?is_available=true`);
           const menuItemsData: MenuItem[] = await menuItemsRes.json();
           setMenuItems(menuItemsData);
 
@@ -248,20 +252,40 @@ const CashierInterfaceContent = () => {
     <div className="container mx-auto px-4 py-8">
       {!mealTypeId ? (
         <>
-          <div className="mb-4">
+          <div className="mb-4 animate-slide-in-down">
             <Link href="/dashboard">
-              <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-                ← {t.backToDashboard}
+              <button 
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center button-press transition-all duration-200 hover:shadow-md"
+                aria-label={t.backToDashboard}
+              >
+                <Tooltip text={t.backToDashboard} position="bottom">
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    ></path>
+                  </svg>
+                </Tooltip>
+                {t.backToDashboard}
               </button>
             </Link>
           </div>
-          <h1 className="text-4xl font-bold text-center mb-8">{t.selectMealType}</h1>
+          <h1 className="text-4xl font-bold text-center mb-8 animate-slide-in-down">{t.selectMealType}</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {mealTypes.map((mealType) => (
+            {mealTypes.map((mealType, index) => (
               <div
                 key={mealType.meal_type_id}
                 onClick={() => handleSelectMealType(mealType)}
-                className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                className={`bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}
               >
                 <h2 className="text-2xl font-bold mb-2">
                   {translatedMealTypes[mealType.meal_type_id] || mealType.meal_type_name}

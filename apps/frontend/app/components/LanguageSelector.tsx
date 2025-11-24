@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
+import Tooltip from './Tooltip';
 
 interface LanguageSelectorProps {
   className?: string;
@@ -45,29 +46,35 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         aria-expanded={isOpen}
       >
         <span className="flex items-center">
+          <Tooltip text="Select language" position="bottom">
+            <svg
+              className="w-5 h-5 mr-2 text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+              />
+            </svg>
+          </Tooltip>
+          {currentLanguageName}
+        </span>
+        <Tooltip text={isOpen ? "Close language menu" : "Open language menu"} position="bottom">
           <svg
-            className="w-5 h-5 mr-2 text-gray-500"
+            className={`w-5 h-5 ml-2 transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
-          {currentLanguageName}
-        </span>
-        <svg
-          className={`w-5 h-5 ml-2 transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        </Tooltip>
       </button>
 
       {/* Dropdown Menu */}
@@ -101,17 +108,20 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                     <div className="flex items-center justify-between">
                       <span>{language.name}</span>
                       {currentLanguage === language.language && (
-                        <svg
-                          className="w-4 h-4 text-blue-700"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+                        <Tooltip text="Current language" position="left">
+                          <svg
+                            className="w-4 h-4 text-blue-700"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </Tooltip>
                       )}
                     </div>
                   </button>

@@ -60,8 +60,8 @@ router.get('/orders/active', isAuthenticated, isManager, getActiveOrders);
 // GET /api/orders/kitchen - Get detailed orders for kitchen monitor (cashier or manager)
 router.get('/orders/kitchen', isAuthenticated, isCashierOrManager, getKitchenOrders);
 
-// PATCH /api/orders/:orderId/status - Update order status (manager only)
-router.patch('/orders/:orderId/status', isAuthenticated, isManager, updateOrderStatus);
+// PATCH /api/orders/:orderId/status - Update order status (cashier or manager - needed for kitchen monitor)
+router.patch('/orders/:orderId/status', isAuthenticated, isCashierOrManager, updateOrderStatus);
 
 // Revenue Report routes (manager only)
 router.get('/revenue/daily', isAuthenticated, isManager, getDailyRevenueReport);

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
 import { OrderContext } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
+import Tooltip from '@/app/components/Tooltip';
 
 interface MealType {
   meal_type_id: number;
@@ -97,21 +98,23 @@ const MealTypeSelection = () => {
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           aria-label={`View shopping cart${itemCount > 0 ? ` with ${itemCount} item${itemCount !== 1 ? 's' : ''}` : ', currently empty'}`}
         >
-          <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            ></path>
-          </svg>
+          <Tooltip text={t.shoppingCart} position="bottom">
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+              ></path>
+            </svg>
+          </Tooltip>
           <span>{t.shoppingCart}</span>
           {itemCount > 0 && (
             <span 
@@ -133,11 +136,12 @@ const MealTypeSelection = () => {
             )
             .map((mealType, index) => {
               const mealName = translatedMealTypeNames[index] || mealType.meal_type_name;
+              const staggerDelay = index % 6; // Cycle through stagger delays
               return (
-                <li key={mealType.meal_type_id}>
+                <li key={mealType.meal_type_id} className={`animate-scale-in animate-stagger-${Math.min(staggerDelay + 1, 4)}`}>
                   <Link
                     href={`/customer-kiosk?mealTypeId=${mealType.meal_type_id}`}
-                    className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg hover-scale transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     aria-label={`Select ${mealName}, priced at ${mealType.meal_type_price.toFixed(2)} dollars, includes ${mealType.entree_count} entree${mealType.entree_count !== 1 ? 's' : ''}, ${mealType.side_count} side${mealType.side_count !== 1 ? 's' : ''}${mealType.drink_size ? `, and a ${mealType.drink_size} drink` : ''}`}
                   >
                     <article>
