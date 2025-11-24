@@ -56,12 +56,15 @@ export default function ActiveOrdersList() {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
+    // Subtract 6 hours to correct for the observed offset in backend stored times
+    date.setHours(date.getHours() - 6);
     return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'America/Chicago', // Specify CST
     });
   };
 
