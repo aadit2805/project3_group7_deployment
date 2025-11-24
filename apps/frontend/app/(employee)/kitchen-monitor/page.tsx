@@ -111,11 +111,11 @@ export default function KitchenMonitor() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="mb-4">
+    <div className="min-h-screen bg-gray-100 p-6 animate-fade-in">
+      <div className="mb-4 animate-slide-in-down">
         <Link href="/dashboard">
           <button 
-            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center"
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center button-press transition-all duration-200 hover:shadow-md"
             aria-label="Back to Dashboard"
           >
             <Tooltip text="Back to Dashboard" position="bottom">
@@ -140,9 +140,9 @@ export default function KitchenMonitor() {
         </Link>
       </div>
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-6 animate-slide-in-down">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">Kitchen Monitor</h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 animate-fade-in animate-stagger-1">
           Active Orders: {orders.length}
         </p>
       </div>
@@ -150,15 +150,15 @@ export default function KitchenMonitor() {
       {/* Orders Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {orders.length === 0 ? (
-          <div className="col-span-full text-center py-12">
+          <div className="col-span-full text-center py-12 animate-fade-in">
             <p className="text-2xl text-gray-500">No active orders</p>
             <p className="text-gray-400 mt-2">New orders will appear here automatically</p>
           </div>
         ) : (
-          orders.map((order) => (
+          orders.map((order, index) => (
             <div
               key={order.order_id}
-              className="bg-white rounded-lg shadow-md border-2 border-gray-300 flex flex-col h-full"
+              className={`bg-white rounded-lg shadow-md border-2 border-gray-300 flex flex-col h-full hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 5) + 1, 4)}`}
             >
               {/* Order Header */}
               <div className="bg-gray-800 text-white p-3 rounded-t-lg">
@@ -192,7 +192,7 @@ export default function KitchenMonitor() {
               <div className="p-3">
                 <button
                   onClick={() => markOrderDone(order.order_id)}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg button-press animate-bounce-in"
                 >
                   DONE
                 </button>

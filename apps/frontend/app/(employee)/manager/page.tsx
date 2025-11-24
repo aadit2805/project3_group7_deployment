@@ -22,44 +22,44 @@ export default function ManagerPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
+    <div className="animate-fade-in">
+      <div className="mb-8 animate-slide-in-down">
         <h1 className="text-3xl font-bold text-gray-800">Manager Controls</h1>
         <p className="text-gray-600 mt-1">Manage menu items and active orders.</p>
       </div>
 
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-md mb-6">
+      <div className="bg-white rounded-lg shadow-md mb-6 animate-scale-in animate-stagger-1">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
             <button
               onClick={() => setActiveTab('orders')}
-              className={`px-6 py-4 font-medium text-sm ${
+              className={`px-6 py-4 font-medium text-sm button-press transition-all duration-200 ${
                 activeTab === 'orders'
                   ? 'border-b-2 border-blue-500 text-blue-600'
                   : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } transition-colors`}
+              }`}
             >
               Active Orders
             </button>
             <button
               onClick={() => setActiveTab('add')}
-              className={`px-6 py-4 font-medium text-sm ${
+              className={`px-6 py-4 font-medium text-sm button-press transition-all duration-200 ${
                 activeTab === 'add'
                   ? 'border-b-2 border-blue-500 text-blue-600'
                   : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } transition-colors`}
+              }`}
             >
               Add Menu Item
             </button>
             <button
               onClick={() => setActiveTab('list')}
-              className={`px-6 py-4 font-medium text-sm ${
+              className={`px-6 py-4 font-medium text-sm button-press transition-all duration-200 ${
                 activeTab === 'list'
                   ? 'border-b-2 border-blue-500 text-blue-600'
                   : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } transition-colors`}
+              }`}
             >
               Manage Menu Items
             </button>
@@ -68,7 +68,7 @@ export default function ManagerPage() {
       </div>
 
       {/* Content */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-6 animate-scale-in animate-stagger-2">
         {activeTab === 'orders' ? (
           <ActiveOrdersList />
         ) : activeTab === 'add' ? (

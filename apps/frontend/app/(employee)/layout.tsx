@@ -70,29 +70,29 @@ const EmployeeLayout = ({ children }: { children: ReactNode }) => {
     <EmployeeContext.Provider value={{ user }}>
       <div className="flex min-h-screen bg-gray-100">
         {/* Sidebar */}
-        <aside className="hidden md:flex flex-col w-64 bg-gray-800 text-white">
-          <div className="h-16 flex items-center justify-center font-bold text-xl border-b border-gray-700">
+        <aside className="hidden md:flex flex-col w-64 bg-gray-800 text-white animate-slide-in-down">
+          <div className="h-16 flex items-center justify-center font-bold text-xl border-b border-gray-700 animate-fade-in">
             Panda Express POS System
           </div>
           <nav className="flex-1 px-2 py-4 space-y-2">
-            {navLinks.map(({ href, label, icon: Icon }) => (
+            {navLinks.map(({ href, label, icon: Icon }, index) => (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center px-4 py-2 rounded-md transition-colors ${pathname.startsWith(href) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
+                className={`flex items-center px-4 py-2 rounded-md transition-all duration-200 hover-scale button-press animate-slide-in-up animate-stagger-${Math.min((index % 4) + 1, 4)} ${pathname.startsWith(href) ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`}
               >
                 <Icon className="h-5 w-5 mr-3" />
                 {label}
               </Link>
             ))}
           </nav>
-          <div className="px-4 py-4 border-t border-gray-700">
+          <div className="px-4 py-4 border-t border-gray-700 animate-fade-in animate-stagger-2">
             <div className="text-sm text-gray-400 mb-2">
               Signed in as <span className="font-semibold">{user?.name || user?.email}</span>
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center w-full px-4 py-2 text-left rounded-md text-gray-300 hover:bg-red-600 hover:text-white"
+              className="flex items-center w-full px-4 py-2 text-left rounded-md text-gray-300 hover:bg-red-600 hover:text-white button-press transition-all duration-200"
             >
               <LogOut className="h-5 w-5 mr-3" />
               Logout
@@ -118,13 +118,13 @@ const EmployeeLayout = ({ children }: { children: ReactNode }) => {
 
           {/* Mobile Nav */}
           {isMobileNavOpen && (
-            <nav className="md:hidden bg-white border-b">
-              {navLinks.map(({ href, label, icon: Icon }) => (
+            <nav className="md:hidden bg-white border-b animate-slide-in-down">
+              {navLinks.map(({ href, label, icon: Icon }, index) => (
                 <Link
                   key={href}
                   href={href}
                   onClick={() => setIsMobileNavOpen(false)}
-                  className={`flex items-center px-4 py-3 transition-colors ${pathname.startsWith(href) ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`flex items-center px-4 py-3 transition-all duration-200 hover-scale button-press animate-fade-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${pathname.startsWith(href) ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
                 >
                   <Icon className="h-5 w-5 mr-3" />
                   {label}
@@ -145,7 +145,7 @@ const EmployeeLayout = ({ children }: { children: ReactNode }) => {
             </nav>
           )}
 
-          <main className="flex-1 p-4 md:p-8 overflow-y-auto">{children}</main>
+          <main className="flex-1 p-4 md:p-8 overflow-y-auto animate-fade-in">{children}</main>
         </div>
       </div>
     </EmployeeContext.Provider>
