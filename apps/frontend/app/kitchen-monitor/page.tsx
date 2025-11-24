@@ -22,6 +22,7 @@ interface KitchenOrder {
   order_status: string;
   staff_username: string | null;
   rush_order?: boolean;
+  order_notes?: string | null;
   meals: Meal[];
 }
 
@@ -192,6 +193,14 @@ export default function KitchenMonitor() {
                   <p className="text-xs text-gray-400">by {order.staff_username}</p>
                 )}
               </div>
+
+              {/* Order Notes */}
+              {order.order_notes && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mx-3 mt-3 rounded">
+                  <p className="text-xs font-semibold text-yellow-800 mb-1">ORDER NOTES:</p>
+                  <p className="text-sm text-yellow-900 whitespace-pre-wrap">{order.order_notes}</p>
+                </div>
+              )}
 
               {/* Order Items */}
               <div className="flex-1 p-4 space-y-3 overflow-y-auto">

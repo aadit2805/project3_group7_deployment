@@ -2,9 +2,10 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 
 const rushOrderCache = new Map<number, boolean>();
+const orderNotesCache = new Map<number, string>();
 
 export const createOrder = async (req: Request, res: Response) => {
-  const { order_items, customer_name, rush_order } = req.body; // Added customer_name and rush_order
+  const { order_items, customer_name, rush_order, order_notes } = req.body;
 
   if (!order_items || !Array.isArray(order_items) || order_items.length === 0) {
     return res.status(400).json({ success: false, error: 'Order items are required' });
@@ -41,6 +42,10 @@ export const createOrder = async (req: Request, res: Response) => {
 
     if (rush_order === true) {
       rushOrderCache.set(orderId, true);
+    }
+
+    if (order_notes && typeof order_notes === 'string' && order_notes.trim()) {
+      orderNotesCache.set(orderId, order_notes.trim());
     }
 
     let totalPrice = 0; // Initialize total price
@@ -109,9 +114,6 @@ export const getActiveOrders = async (_req: Request, res: Response) => {
 
   try {
     // Get all orders that are not addressed or cancelled
-    // Active orders are those with status: pending, processing, preparing, ready, completed, etc.
-    // Excluding: addressed, cancelled
-    // Note: 'completed' orders are still active until they are marked as 'addressed'
     const result = await client.query(
       `SELECT 
         o.order_id,
@@ -210,6 +212,7 @@ export const getKitchenOrders = async (_req: Request, res: Response) => {
       }
 
       const isRushOrder = rushOrderCache.get(orderRow.order_id) || false;
+      const orderNotes = orderNotesCache.get(orderRow.order_id) || null;
 
       orders.push({
         order_id: orderRow.order_id,
@@ -218,6 +221,7 @@ export const getKitchenOrders = async (_req: Request, res: Response) => {
         order_status: orderRow.order_status || 'pending',
         staff_username: orderRow.staff_username,
         rush_order: isRushOrder,
+        order_notes: orderNotes,
         meals,
       });
     }
@@ -304,6 +308,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     if (status === 'completed' || status === 'addressed') {
       rushOrderCache.delete(parseInt(orderId));
+      orderNotesCache.delete(parseInt(orderId));
     }
 
     return res.status(200).json({
@@ -385,6 +390,7 @@ export const markOrderAddressed = async (req: Request, res: Response) => {
     await client.query('COMMIT');
 
     rushOrderCache.delete(parseInt(orderId));
+    orderNotesCache.delete(parseInt(orderId));
 
     return res.status(200).json({
       success: true,

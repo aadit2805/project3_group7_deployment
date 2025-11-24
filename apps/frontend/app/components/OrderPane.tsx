@@ -9,6 +9,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
   const context = useContext(OrderContext);
   const router = useRouter();
   const [isRushOrder, setIsRushOrder] = useState<boolean>(false);
+  const [orderNotes, setOrderNotes] = useState<string>('');
 
   // Define all text labels that need translation
   const textLabels = [
@@ -25,6 +26,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
     'Order submitted successfully!',
     'Failed to submit order.',
     'An error occurred while submitting the order.',
+    'Order Notes',
     'Mark as Rush Order',
   ];
 
@@ -45,7 +47,8 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
     successMessage: translatedTexts[10] || 'Order submitted successfully!',
     failMessage: translatedTexts[11] || 'Failed to submit order.',
     errorMessage: translatedTexts[12] || 'An error occurred while submitting the order.',
-    markAsRushOrder: translatedTexts[13] || 'Mark as Rush Order',
+    orderNotes: translatedTexts[13] || 'Order Notes',
+    markAsRushOrder: translatedTexts[14] || 'Mark as Rush Order',
   };
 
   if (!context) {
@@ -75,7 +78,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ order_items: order, rush_order: isRushOrder }),
+        body: JSON.stringify({ order_items: order, rush_order: isRushOrder, order_notes: orderNotes }),
       });
 
               if (response.ok) {
@@ -84,6 +87,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
 
                 setOrder([]);
                 setIsRushOrder(false);
+                setOrderNotes('');
 
                 localStorage.removeItem('order');
 
@@ -193,6 +197,20 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
             <p className="text-2xl font-bold mb-4" role="status" aria-live="polite">
               {t.total}: <span aria-label={`Total price ${totalPrice.toFixed(2)} dollars`}>${totalPrice.toFixed(2)}</span>
             </p>
+            <div className="mb-4">
+              <label htmlFor="order-notes" className="block text-lg font-semibold text-gray-700 mb-2">
+                {t.orderNotes}:
+              </label>
+              <textarea
+                id="order-notes"
+                value={orderNotes}
+                onChange={(e) => setOrderNotes(e.target.value)}
+                placeholder="Enter any special instructions or notes..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={3}
+                aria-label="Order notes input field"
+              />
+            </div>
             <div className="flex items-center justify-end gap-3 mb-4">
               <input
                 type="checkbox"
