@@ -30,6 +30,7 @@ export default function KitchenMonitor() {
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCompactView, setIsCompactView] = useState(false);
   const router = useRouter();
   const previousOrderIdsRef = useRef<Set<number>>(new Set());
 
@@ -163,14 +164,27 @@ export default function KitchenMonitor() {
       </div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">Kitchen Monitor</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-4xl font-bold text-gray-800">Kitchen Monitor</h1>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600">
+              {isCompactView ? 'Compact' : 'Expanded'} View
+            </span>
+            <button
+              onClick={() => setIsCompactView(!isCompactView)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-semibold"
+            >
+              {isCompactView ? 'Switch to Expanded' : 'Switch to Compact'}
+            </button>
+          </div>
+        </div>
         <p className="text-gray-600">
           Active Orders: {orders.length}
         </p>
       </div>
 
       {/* Orders Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className={`grid gap-4 ${isCompactView ? 'grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'}`}>
         {orders.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <p className="text-2xl text-gray-500">No active orders</p>
@@ -180,38 +194,42 @@ export default function KitchenMonitor() {
           orders.map((order) => (
             <div
               key={order.order_id}
-              className="bg-white rounded-lg shadow-md border-2 border-gray-300 flex flex-col h-full"
+              className={`bg-white rounded-lg shadow-md border-2 border-gray-300 flex flex-col h-full ${isCompactView ? 'text-xs' : ''}`}
             >
               {/* Order Header */}
-              <div className={`text-white p-3 rounded-t-lg ${order.rush_order ? 'bg-red-600' : 'bg-gray-800'}`}>
-                <h2 className="font-bold text-lg">Order #{order.order_id}</h2>
+              <div className={`text-white ${isCompactView ? 'p-2' : 'p-3'} rounded-t-lg ${order.rush_order ? 'bg-red-600' : 'bg-gray-800'}`}>
+                <h2 className={`font-bold ${isCompactView ? 'text-sm' : 'text-lg'}`}>Order #{order.order_id}</h2>
                 {order.rush_order && (
-                  <p className="text-lg font-bold text-yellow-300 mb-1">RUSH ORDER</p>
+                  <p className={`${isCompactView ? 'text-sm' : 'text-lg'} font-bold text-yellow-300 ${isCompactView ? 'mb-0' : 'mb-1'}`}>RUSH ORDER</p>
                 )}
-                <p className="text-sm text-gray-300">{order.customer_name}</p>
-                {order.staff_username && (
-                  <p className="text-xs text-gray-400">by {order.staff_username}</p>
+                {!isCompactView && (
+                  <>
+                    <p className="text-sm text-gray-300">{order.customer_name}</p>
+                    {order.staff_username && (
+                      <p className="text-xs text-gray-400">by {order.staff_username}</p>
+                    )}
+                  </>
                 )}
               </div>
 
               {/* Order Notes */}
               {order.order_notes && (
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mx-3 mt-3 rounded">
-                  <p className="text-xs font-semibold text-yellow-800 mb-1">ORDER NOTES:</p>
-                  <p className="text-sm text-yellow-900 whitespace-pre-wrap">{order.order_notes}</p>
+                <div className={`bg-yellow-50 border-l-4 border-yellow-400 ${isCompactView ? 'p-2 mx-2 mt-2' : 'p-3 mx-3 mt-3'} rounded`}>
+                  <p className={`${isCompactView ? 'text-xs' : 'text-xs'} font-semibold text-yellow-800 ${isCompactView ? 'mb-0.5' : 'mb-1'}`}>ORDER NOTES:</p>
+                  <p className={`${isCompactView ? 'text-xs' : 'text-sm'} text-yellow-900 whitespace-pre-wrap`}>{order.order_notes}</p>
                 </div>
               )}
 
               {/* Order Items */}
-              <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+              <div className={`flex-1 ${isCompactView ? 'p-2 space-y-1.5' : 'p-4 space-y-3'} overflow-y-auto`}>
                 {order.meals.map((meal, mealIdx) => (
-                  <div key={meal.meal_id} className="border-b pb-2 last:border-b-0">
-                    <p className="font-semibold text-sm text-gray-700 mb-1">
+                  <div key={meal.meal_id} className={`border-b ${isCompactView ? 'pb-1' : 'pb-2'} last:border-b-0`}>
+                    <p className={`font-semibold ${isCompactView ? 'text-xs' : 'text-sm'} text-gray-700 ${isCompactView ? 'mb-0.5' : 'mb-1'}`}>
                       {mealIdx + 1}. {meal.meal_type_name}
                     </p>
-                    <ul className="ml-3 space-y-1">
+                    <ul className={`${isCompactView ? 'ml-2 space-y-0.5' : 'ml-3 space-y-1'}`}>
                       {meal.items.map((item, itemIdx) => (
-                        <li key={itemIdx} className="text-sm text-gray-600 flex items-start">
+                        <li key={itemIdx} className={`${isCompactView ? 'text-xs' : 'text-sm'} text-gray-600 flex items-start`}>
                           <span className="mr-2">•</span>
                           <span>{item.name}</span>
                         </li>
@@ -222,19 +240,33 @@ export default function KitchenMonitor() {
               </div>
 
               {/* Done Button */}
-              <div className="p-3">
-                <button
-                  onClick={() => markOrderDone(order.order_id)}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
-                >
-                  DONE
-                </button>
+              <div className={isCompactView ? 'p-2' : 'p-3'}>
+                {isCompactView ? (
+                  <button
+                    onClick={() => markOrderDone(order.order_id)}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-2 rounded transition-colors duration-200 shadow-sm hover:shadow-md flex items-center justify-center"
+                    title="Mark as done"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => markOrderDone(order.order_id)}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                  >
+                    DONE
+                  </button>
+                )}
               </div>
 
               {/* Staff/Time Footer */}
-              <div className="bg-gray-100 px-3 py-2 rounded-b-lg text-xs text-gray-600 text-center">
-                {new Date(order.datetime).toLocaleTimeString()}
-              </div>
+              {!isCompactView && (
+                <div className="bg-gray-100 px-3 py-2 rounded-b-lg text-xs text-gray-600 text-center">
+                  {new Date(order.datetime).toLocaleTimeString()}
+                </div>
+              )}
             </div>
           ))
         )}
