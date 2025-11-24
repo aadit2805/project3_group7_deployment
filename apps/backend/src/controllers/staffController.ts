@@ -1,5 +1,39 @@
-import { Request, Response } from 'express';
-import { getLocalStaff, updateLocalStaff, updateLocalStaffPassword, createLocalStaff } from '../services/staffService';
+import { Request, Response, NextFunction } from 'express';
+import { getLocalStaff, updateLocalStaff, updateLocalStaffPassword, createLocalStaff, authenticateStaff } from '../services/staffService'; // Import authenticateStaff
+import passport from 'passport'; // Import passport
+
+export const getAuthenticatedUserController = (req: Request, res: Response) => {
+  if (req.user) {
+    // Ensure that sensitive information like password_hash is not sent to the frontend
+    const user = req.user as any; // Cast to any to access properties
+    const { password_hash, ...userWithoutHash } = user;
+    res.status(200).json(userWithoutHash);
+  } else {
+    res.status(404).json({ message: 'User not found in session' });
+  }
+};
+
+export const staffLoginController = (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('local', (err: any, user: any, info: any) => {
+    if (err) {
+      console.error('Passport authentication error:', err);
+      return res.status(500).json({ message: 'Internal server error during authentication' });
+    }
+    if (!user) {
+      return res.status(401).json({ message: info.message || 'Authentication failed' });
+    }
+    req.logIn(user, (loginErr) => {
+      if (loginErr) {
+        console.error('Error logging in user:', loginErr);
+        return res.status(500).json({ message: 'Could not log in user' });
+      }
+      // Attach a 'type' property to distinguish local staff when logging in
+      (user as any).type = 'local';
+      // If login is successful, send user data
+      res.status(200).json({ message: 'Login successful', user: { staff_id: user.staff_id, username: user.username, role: user.role, type: user.type } });
+    });
+  })(req, res, next);
+};
 
 export const getLocalStaffController = async (req: Request, res: Response) => {
   try {

@@ -10,6 +10,9 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const errorParam = searchParams.get('error');
@@ -30,7 +33,39 @@ function LoginContent() {
     }
   };
 
+  const handleStaffLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/staff/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
+      if (response.ok) {
+        const data = await response.json();
+        // Assuming the backend returns a redirect URL or a token
+        if (data.redirectUrl) {
+          router.push(data.redirectUrl);
+        } else {
+          // Handle successful login, maybe redirect to a default staff dashboard
+          router.push('/dashboard');
+        }
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Staff login failed. Please check your credentials.');
+      }
+    } catch (err) {
+      console.error('Error during staff login:', err);
+      setError('An unexpected error occurred during staff login.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-50">
@@ -46,6 +81,52 @@ function LoginContent() {
           </div>
         )}
 
+        <form onSubmit={handleStaffLogin} className="space-y-4 mb-6">
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={loading}
+          >
+            {loading ? 'Logging in...' : 'Staff Login'}
+          </button>
+        </form>
+
+        <div className="relative flex justify-center text-sm mb-6">
+          <span className="px-2 bg-white text-gray-500">
+            Or continue with
+          </span>
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+        </div>
         <div className="space-y-4">
           <button
             onClick={handleGoogleLogin}
@@ -80,7 +161,6 @@ function LoginContent() {
             Click the button above to authenticate with Google OAuth
           </p>
         </div>
-
         <nav className="mt-6 text-center" aria-label="Back navigation">
           <Link 
             href="/" 

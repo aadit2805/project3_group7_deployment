@@ -3,6 +3,31 @@ import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+export const authenticateStaff = async (username: string, passwordPlain: string) => {
+  try {
+    const staff = await prisma.staff.findUnique({
+      where: { username: username },
+    });
+
+    if (!staff) {
+      return null; // Staff not found
+    }
+
+    const isPasswordValid = await bcrypt.compare(passwordPlain, staff.password_hash);
+
+    if (!isPasswordValid) {
+      return null; // Invalid password
+    }
+
+    // Return staff object without password hash
+    const { password_hash, ...staffWithoutHash } = staff;
+    return staffWithoutHash;
+  } catch (error) {
+    console.error('Error authenticating staff:', error);
+    throw new Error('Failed to authenticate staff');
+  }
+};
+
 export const getLocalStaff = async () => {
   try {
     const staff = await prisma.staff.findMany({

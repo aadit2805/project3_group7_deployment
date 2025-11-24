@@ -2,14 +2,21 @@ import { User as PrismaUser } from '@prisma/client';
 
 declare global {
   namespace Express {
-    interface User extends PrismaUser {
-      id: number;
-      googleId: string | null;
-      email: string | null;
-      name: string | null;
-      role: string | null;
+    interface User {
+      role: string;
       createdAt: Date;
       updatedAt: Date;
+      password_hash?: string; // Only for local staff
+
+      // Google OAuth specific
+      id?: number; // Prisma User ID
+      googleId?: string | null;
+      email?: string | null;
+      name?: string | null;
+
+      // Local Staff specific
+      staff_id?: number; // Prisma Staff ID
+      username?: string; // For local staff
     }
     interface Request {
       user?: User;

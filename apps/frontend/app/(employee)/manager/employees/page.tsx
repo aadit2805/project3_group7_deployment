@@ -267,7 +267,7 @@ const EmployeeManagementPage = () => {
         throw new Error(errorData.message || 'Failed to create staff member.');
       }
 
-      const createdStaff = await response.json();
+      const createdStaff: { staff_id: number; username: string; role: string; createdAt: string; } = await response.json();
       setCreateStaffSuccess(`Staff member '${createdStaff.username}' created successfully!`);
       // Add a small delay before closing the modal and clearing messages
       setTimeout(() => {
@@ -282,7 +282,7 @@ const EmployeeManagementPage = () => {
 
       // Add the new staff member to the existing list
                 setUsers(prevUsers => {
-                  const newStaffMember = {
+                  const newStaffMember: User = {
                     id: `local-${createdStaff.staff_id}`,
                     name: createdStaff.username,
                     username: createdStaff.username,
