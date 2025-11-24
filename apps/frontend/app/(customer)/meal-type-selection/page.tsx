@@ -32,7 +32,6 @@ const MealTypeSelection = () => {
     'Create your own meal',
     'Drinks',
     'Select a beverage',
-    'Logout', // New
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -48,7 +47,6 @@ const MealTypeSelection = () => {
     createYourOwn: translatedTexts[7] || 'Create your own meal',
     drinks: translatedTexts[8] || 'Drinks',
     selectBeverage: translatedTexts[9] || 'Select a beverage',
-    logout: translatedTexts[10] || 'Logout', // New
   };
 
   useEffect(() => {
@@ -92,40 +90,11 @@ const MealTypeSelection = () => {
   const itemCount = order.length;
   const router = useRouter(); // Import useRouter for handleLogout
 
-  const handleLogout = () => {
-    localStorage.removeItem('customerToken');
-    localStorage.removeItem('customerId');
-    // Optionally remove other customer-related data if stored
-    router.push('/rewards-login'); // Redirect to login page
-  };
-
   return (
     <div className="container mx-auto px-4">
       <header className="flex justify-between items-center my-8">
         <h1 className="text-4xl font-bold">{t.title}</h1>
         <div className="flex space-x-4"> {/* Container for multiple links/buttons */}
-          {localStorage.getItem('customerToken') && ( // Only show if logged in
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
-            >
-              <svg // Example SVG for logout
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                ></path>
-              </svg>
-              {t.logout}
-            </button>
-          )}
           <Link
             href="/shopping-cart"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"

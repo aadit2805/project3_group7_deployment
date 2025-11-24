@@ -43,7 +43,6 @@ const CustomerKioskContent = () => {
     'Update Item',
     'Add to Order',
     'Rewards', // Added for translation
-    'Logout', // New
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -59,7 +58,6 @@ const CustomerKioskContent = () => {
     updateItem: translatedTexts[7] || 'Update Item',
     addToOrder: translatedTexts[8] || 'Add to Order',
     rewards: translatedTexts[9] || 'Rewards', // Added for use
-    logout: translatedTexts[10] || 'Logout', // New for use
   };
 
   if (!context) {
@@ -75,13 +73,6 @@ const CustomerKioskContent = () => {
   const [selectedEntrees, setSelectedEntrees] = useState<MenuItem[]>([]);
   const [selectedSides, setSelectedSides] = useState<MenuItem[]>([]);
   const [selectedDrink, setSelectedDrink] = useState<MenuItem | undefined>(undefined);
-
-  const handleLogout = () => {
-    localStorage.removeItem('customerToken');
-    localStorage.removeItem('customerId');
-    // Optionally remove other customer-related data if stored
-    router.push('/rewards-login'); // Redirect to login page
-  };
 
   useEffect(() => {
     if (!mealTypeId) {
@@ -202,29 +193,6 @@ const CustomerKioskContent = () => {
               {t.customizeYour} {translatedMealTypeName || selectedMealType.meal_type_name}
             </h1>
             <div className="flex space-x-4"> {/* Container for multiple links */}
-              {/* Logout Button */}
-              {localStorage.getItem('customerToken') && ( // Only show if logged in
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
-                >
-                  <svg // Example SVG for logout
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    ></path>
-                  </svg>
-                  {t.logout}
-                </button>
-              )}
               <Link
                 href="/rewards"
                 className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
