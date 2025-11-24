@@ -2,11 +2,13 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import session from 'express-session';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as LocalStrategy } from 'passport-local'; // Import LocalStrategy
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import apiRouter from './routes/api';
 import { isAuthenticated } from './middleware/auth';
+import { authenticateStaff } from './services/staffService'; // Import authenticateStaff
 // Type declarations are automatically included from src/types/express.d.ts
 
 dotenv.config();
@@ -95,6 +97,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               role: 'CASHIER', // default for new users
             },
           });
+          // Attach a 'type' property to distinguish Google users
+          (user as any).type = 'google';
           return done(null, user);
         } catch (err) {
           console.error('Error in Google OAuth strategy:', err);
@@ -107,16 +111,63 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   console.warn('Google OAuth credentials not configured. OAuth will not work.');
 }
 
-passport.serializeUser((user: Express.User, done: (err: any, id?: number) => void) => {
-  done(null, user.id);
+// Local Strategy for Staff Login
+passport.use(new LocalStrategy(
+  async (username, password, done) => {
+    try {
+      const staff = await authenticateStaff(username, password);
+      if (!staff) {
+        return done(null, false, { message: 'Incorrect username or password.' });
+      }
+      // Attach a 'type' property to distinguish local staff
+      (staff as any).type = 'local';
+      return done(null, staff);
+    } catch (err) {
+      console.error('Error in Local Strategy:', err);
+      return done(err);
+    }
+  }
+));
+
+// Serialize user into the session
+passport.serializeUser((user: any, done: (err: any, userObject?: any) => void) => {
+  if (user.type === 'google') {
+    done(null, { id: user.id, type: 'google' });
+  } else if (user.type === 'local') {
+    done(null, { staff_id: user.staff_id, type: 'local' });
+  } else {
+    done(new Error('Unknown user type'), null);
+  }
 });
 
+// Deserialize user from the session
 passport.deserializeUser(
-  async (id: number, done: (err: any, user?: Express.User | null) => void) => {
+  async (userObject: { id?: number; staff_id?: number; type: 'google' | 'local' }, done: (err: any, user?: Express.User | null) => void) => {
     try {
-      const user = await prisma.user.findUnique({ where: { id } });
+      let user: Express.User | null = null;
+      if (userObject.type === 'google' && userObject.id) {
+        const googleUser = await prisma.user.findUnique({ where: { id: userObject.id } });
+        if (googleUser) {
+          user = { ...googleUser, type: 'google' };
+        }
+      } else if (userObject.type === 'local' && userObject.staff_id) {
+        const localStaff = await prisma.staff.findUnique({ where: { staff_id: userObject.staff_id } });
+        if (localStaff) {
+          // Merge staff properties into a common Express.User structure
+          user = { 
+            staff_id: localStaff.staff_id,
+            username: localStaff.username,
+            role: localStaff.role,
+            createdAt: localStaff.createdAt,
+            updatedAt: localStaff.updatedAt,
+            password_hash: localStaff.password_hash, // Include for consistency, but remove before sending to frontend
+            type: 'local'
+          };
+        }
+      }
+
       if (!user) {
-        return done(new Error('User not found'), null);
+        return done(new Error('User not found during deserialization'), null);
       }
       done(null, user);
     } catch (err) {
@@ -131,6 +182,7 @@ passport.deserializeUser(
 
 // --- AUTH ROUTES ---
 
+// Google OAuth routes
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get(
@@ -140,21 +192,15 @@ app.get(
   }),
   (req: Request, res: Response) => {
     // Successful authentication
-    console.log('✅ OAuth Success! User:', req.user?.email, 'Session ID:', req.sessionID);
+    console.log('✅ OAuth Success! User:', (req.user as any)?.email, 'Session ID:', req.sessionID);
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard`);
   }
 );
 
-// Get current authenticated user
-app.get('/api/user', isAuthenticated, (req: Request, res: Response) => {
-  console.log('📋 /api/user - Authenticated! User:', req.user?.email);
-  res.json({
-    id: req.user!.id,
-    email: req.user!.email,
-    name: req.user!.name,
-    role: req.user!.role,
-  });
-});
+// Local Staff Login Route (POST for username/password)
+// This route is handled by the /api/staff/login route defined in api.ts
+// The actual Passport.js authentication for this is implicitly handled by the local strategy
+// when the /api/staff/login endpoint is hit.
 
 // Logout endpoint
 app.post('/api/logout', (req: Request, res: Response, next: NextFunction) => {
@@ -176,20 +222,8 @@ app.post('/api/logout', (req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// Check authentication status
-app.get('/api/auth/status', (req: Request, res: Response) => {
-  res.json({
-    authenticated: req.isAuthenticated && req.isAuthenticated(),
-    user: req.user
-      ? {
-          id: req.user.id,
-          email: req.user.email,
-          name: req.user.name,
-          role: req.user.role,
-        }
-      : null,
-  });
-});
+// Check authentication status (handled by /api/user route via apiRouter)
+// This explicit route is no longer needed here as apiRouter handles /api/user
 
 // --- OTHER API ROUTES ---
 

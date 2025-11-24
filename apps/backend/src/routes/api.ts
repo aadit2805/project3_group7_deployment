@@ -33,6 +33,14 @@ import {
   getSalesTrends,
   getSalesSummary,
 } from '../controllers/salesAnalyticsController';
+import {
+  getLocalStaffController,
+  updateLocalStaffController,
+  updateLocalStaffPasswordController,
+  createLocalStaffController,
+  staffLoginController,
+  getAuthenticatedUserController, // Import getAuthenticatedUserController
+} from '../controllers/staffController'; // Import all staff controllers
 import { ApiResponse } from '../types';
 import pool from '../config/db';
 import translationRoutes from './translation.routes';
@@ -43,6 +51,9 @@ import { authenticateCustomer } from '../middleware/customerAuth'; // Import aut
 import axios from 'axios';
 
 const router = Router();
+
+// GET /api/user - Get currently authenticated user (for both Google and local staff)
+router.get('/user', isAuthenticated, getAuthenticatedUserController);
 
 // Inventory routes
 router.use('/inventory', inventoryRoutes);
@@ -70,6 +81,19 @@ router.get('/orders/customer/:customerId', authenticateCustomer, getCustomerOrde
 // PATCH /api/orders/:orderId/status - Update order status (cashier or manager - needed for kitchen monitor)
 router.patch('/orders/:orderId/status', isAuthenticated, isCashierOrManager, updateOrderStatus);
 
+// Staff Login Route (public)
+router.post('/staff/login', staffLoginController);
+
+// Staff routes (manager only)
+router.post('/staff/local', isAuthenticated, isManager, createLocalStaffController); // New route for creating local staff
+router.get('/staff/local', isAuthenticated, isManager, getLocalStaffController);
+router.put('/staff/local/:id', isAuthenticated, isManager, updateLocalStaffController); // New route for updating local staff
+router.put(
+  '/staff/local/:id/password',
+  isAuthenticated,
+  isManager,
+  updateLocalStaffPasswordController
+); // New route for updating local staff password
 // GET /api/orders/prepared - Get prepared orders (completed but not addressed)
 router.get('/orders/prepared', isAuthenticated, getPreparedOrders);
 
