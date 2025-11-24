@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Tooltip from '@/app/components/Tooltip';
 
 interface BestSellingItem {
   menu_item_id: number;
@@ -186,25 +187,45 @@ export default function BestSellingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="mb-4">
+    <main className="min-h-screen bg-gray-50 p-8 animate-fade-in">
+      <div className="mb-4 animate-slide-in-down">
         <Link href="/manager">
-          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-            ← Back to Manager Dashboard
+          <button 
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center button-press transition-all duration-200 hover:shadow-md"
+            aria-label="Back to Manager Dashboard"
+          >
+            <Tooltip text="Back to Manager Dashboard" position="bottom">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                ></path>
+              </svg>
+            </Tooltip>
+            Back to Manager Dashboard
           </button>
         </Link>
       </div>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6 animate-scale-in animate-stagger-1">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Best-Selling Items</h1>
-              <p className="text-gray-600 mt-1">Identify top performers and plan promotions</p>
+              <h1 className="text-3xl font-bold text-gray-800 animate-slide-in-down">Best-Selling Items</h1>
+              <p className="text-gray-600 mt-1 animate-fade-in animate-stagger-1">Identify top performers and plan promotions</p>
             </div>
             <button
               onClick={() => fetchAllStats()}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-all duration-200 hover:shadow-lg button-press"
             >
               Refresh
             </button>
@@ -212,7 +233,7 @@ export default function BestSellingPage() {
         </div>
 
         {/* Date Filter */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6 animate-scale-in animate-stagger-2">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Filters</h2>
           <div className="flex gap-4 items-end">
             <div className="flex-1">

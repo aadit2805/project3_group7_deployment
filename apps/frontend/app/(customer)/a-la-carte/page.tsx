@@ -4,6 +4,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
+import Tooltip from '@/app/components/Tooltip';
+import VoiceSearchInput from '@/app/components/VoiceSearchInput';
 
 // Interfaces to match the data structure
 interface MenuItem {
@@ -27,6 +29,7 @@ const ALaCartePage = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [translatedMenuItems, setTranslatedMenuItems] = useState<Record<number, string>>({});
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const context = useContext(OrderContext);
   const { translateBatch, currentLanguage } = useTranslation();
 
@@ -41,6 +44,7 @@ const ALaCartePage = () => {
     'Large',
     'Add',
     'Loading...',
+    'Search menu items',
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -56,6 +60,7 @@ const ALaCartePage = () => {
     large: translatedTexts[7] || 'Large',
     add: translatedTexts[8] || 'Add',
     loading: translatedTexts[9] || 'Loading...',
+    searchMenuItems: translatedTexts[10] || 'Search menu items',
   };
 
   useEffect(() => {
@@ -139,21 +144,25 @@ const ALaCartePage = () => {
         <Link
           href="/shopping-cart"
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
+          aria-label={t.shoppingCart}
         >
-          <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            ></path>
-          </svg>
+          <Tooltip text={t.shoppingCart} position="bottom">
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+              ></path>
+            </svg>
+          </Tooltip>
           {t.shoppingCart}
           {itemCount > 0 && (
             <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm">
@@ -166,21 +175,25 @@ const ALaCartePage = () => {
         <Link
           href="/meal-type-selection"
           className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
+          aria-label={t.backToSelection}
         >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            ></path>
-          </svg>
+          <Tooltip text={t.backToSelection} position="bottom">
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              ></path>
+            </svg>
+          </Tooltip>
           {t.backToSelection}
         </Link>
       </div>
@@ -188,63 +201,95 @@ const ALaCartePage = () => {
         <div className="col-span-1">
           <section className="mb-10">
             <h2 className="text-3xl font-semibold mb-4">{t.entrees}</h2>
+            <div className="mb-4">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="entree-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {entrees.map((item) => (
-                <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
-                  <div className="flex space-x-2 mt-4">
-                    <button
-                      onClick={() => handleAddItem(item, 4)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.small}
-                    </button>
-                    <button
-                      onClick={() => handleAddItem(item, 5)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.medium}
-                    </button>
-                    <button
-                      onClick={() => handleAddItem(item, 6)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.large}
-                    </button>
+              {entrees
+                .filter((item) => {
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
+                .map((item, index) => (
+                  <div key={item.menu_item_id} className={`bg-white rounded-lg shadow-md p-6 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}>
+                    <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
+                    <div className="flex space-x-2 mt-4">
+                      <button
+                        onClick={() => handleAddItem(item, 4)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.small}
+                      </button>
+                      <button
+                        onClick={() => handleAddItem(item, 5)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.medium}
+                      </button>
+                      <button
+                        onClick={() => handleAddItem(item, 6)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.large}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </section>
 
           <section>
             <h2 className="text-3xl font-semibold mb-4">{t.sides}</h2>
+            <div className="mb-4">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="side-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {sides.map((item) => (
-                <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
-                  <div className="flex space-x-2 mt-4">
-                    <button
-                      onClick={() => handleAddItem(item, 7)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.small}
-                    </button>
-                    <button
-                      onClick={() => handleAddItem(item, 8)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.medium}
-                    </button>
-                    <button
-                      onClick={() => handleAddItem(item, 9)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                    >
-                      {t.add} {t.large}
-                    </button>
+              {sides
+                .filter((item) => {
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
+                .map((item, index) => (
+                  <div key={item.menu_item_id} className={`bg-white rounded-lg shadow-md p-6 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}>
+                    <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
+                    <div className="flex space-x-2 mt-4">
+                      <button
+                        onClick={() => handleAddItem(item, 7)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.small}
+                      </button>
+                      <button
+                        onClick={() => handleAddItem(item, 8)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.medium}
+                      </button>
+                      <button
+                        onClick={() => handleAddItem(item, 9)}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm button-press transition-all duration-200 hover:shadow-md"
+                      >
+                        {t.add} {t.large}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </section>
         </div>

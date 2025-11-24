@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { useFocusTrap } from '../hooks/useKeyboardNavigation';
 import Link from 'next/link';
+import Tooltip from './Tooltip';
 
 export default function AccessibilityMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,28 +46,30 @@ export default function AccessibilityMenu() {
         aria-controls="accessibility-panel"
         aria-haspopup="dialog"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-          />
-        </svg>
+        <Tooltip text="Accessibility settings" position="left">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+            />
+          </svg>
+        </Tooltip>
       </button>
 
       {isOpen && (
         <div
           ref={panelRef}
           id="accessibility-panel"
-          className="absolute bottom-16 right-0 bg-white border border-gray-300 rounded-lg shadow-xl p-6 w-80"
+          className="absolute bottom-16 right-0 bg-white border border-gray-300 rounded-lg shadow-xl p-6 w-80 animate-slide-in-up"
           role="dialog"
           aria-label="Accessibility settings panel"
           aria-modal="true"
@@ -78,21 +81,23 @@ export default function AccessibilityMenu() {
               className="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1"
               aria-label="Close accessibility settings"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <Tooltip text="Close accessibility settings" position="bottom">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </Tooltip>
             </button>
           </div>
 

@@ -14,6 +14,7 @@ import {
   updateOrderStatus,
   getPreparedOrders,
   markOrderAddressed,
+  getCustomerOrders, // Import getCustomerOrders
 } from '../controllers/orderController';
 import {
   getDailyRevenueReport,
@@ -37,7 +38,8 @@ import pool from '../config/db';
 import translationRoutes from './translation.routes';
 import weatherRoutes from './weather.routes';
 import inventoryRoutes from './inventory.routes';
-import { isAuthenticated, isManager } from '../middleware/auth';
+import { isAuthenticated, isManager, isCashierOrManager } from '../middleware/auth';
+import { authenticateCustomer } from '../middleware/customerAuth'; // Import authenticateCustomer
 import axios from 'axios';
 
 const router = Router();
@@ -59,11 +61,14 @@ router.post('/orders', createOrder);
 // GET /api/orders/active - Get all active orders (manager only)
 router.get('/orders/active', isAuthenticated, isManager, getActiveOrders);
 
-// GET /api/orders/kitchen - Get detailed orders for kitchen monitor (manager only)
-router.get('/orders/kitchen', isAuthenticated, isManager, getKitchenOrders);
+// GET /api/orders/kitchen - Get detailed orders for kitchen monitor (cashier or manager)
+router.get('/orders/kitchen', isAuthenticated, isCashierOrManager, getKitchenOrders);
 
-// PATCH /api/orders/:orderId/status - Update order status (manager only)
-router.patch('/orders/:orderId/status', isAuthenticated, isManager, updateOrderStatus);
+// GET /api/orders/customer/:customerId - Get orders for a specific customer
+router.get('/orders/customer/:customerId', authenticateCustomer, getCustomerOrders);
+
+// PATCH /api/orders/:orderId/status - Update order status (cashier or manager - needed for kitchen monitor)
+router.patch('/orders/:orderId/status', isAuthenticated, isCashierOrManager, updateOrderStatus);
 
 // GET /api/orders/prepared - Get prepared orders (completed but not addressed)
 router.get('/orders/prepared', isAuthenticated, getPreparedOrders);
@@ -79,8 +84,18 @@ router.get('/revenue/export/csv', isAuthenticated, isManager, exportRevenueRepor
 
 // Order Analytics routes (manager only)
 router.get('/analytics/completion-time', isAuthenticated, isManager, getAverageCompletionTime);
-router.get('/analytics/completion-time/hourly', isAuthenticated, isManager, getHourlyCompletionTime);
-router.get('/analytics/completion-time/summary', isAuthenticated, isManager, getCompletionTimeSummary);
+router.get(
+  '/analytics/completion-time/hourly',
+  isAuthenticated,
+  isManager,
+  getHourlyCompletionTime
+);
+router.get(
+  '/analytics/completion-time/summary',
+  isAuthenticated,
+  isManager,
+  getCompletionTimeSummary
+);
 
 // Sales Analytics routes (manager only)
 router.get('/analytics/best-selling', isAuthenticated, isManager, getBestSellingItems);
@@ -113,40 +128,17 @@ router.get('/hello', (_req: Request, res: Response<ApiResponse<{ greeting: strin
   });
 });
 
-// GET /api/users (example)
-router.get(
-  '/users',
-  (_req: Request, res: Response<ApiResponse<{ id: number; name: string }[]>>) => {
-    res.json({
-      success: true,
-      data: [
-        { id: 1, name: 'John Doe' },
-        { id: 2, name: 'Jane Smith' },
-        { id: 3, name: 'Bob Johnson' },
-      ],
-    });
-  }
-);
+import userRoutes from './user.routes';
+import customerAuthRoutes from './customerAuth.routes'; // Import the new customer auth routes
+// ... (other imports)
 
-// POST /api/users (example)
-router.post('/users', (req: Request, res: Response<ApiResponse<{ id: number; name: string }>>) => {
-  const { name } = req.body;
+// ... (other routes)
 
-  if (!name) {
-    return res.status(400).json({
-      success: false,
-      error: 'Name is required',
-    });
-  }
+// User management routes (manager only)
+router.use('/users', isAuthenticated, isManager, userRoutes);
 
-  return res.status(201).json({
-    success: true,
-    data: {
-      id: Date.now(),
-      name,
-    },
-  });
-});
+// Customer authentication routes
+router.use('/customer/auth', customerAuthRoutes); // Integrate new customer auth routes
 
 // External API routes
 router.use('/translation', translationRoutes);

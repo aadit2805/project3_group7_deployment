@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Tooltip from '@/app/components/Tooltip';
 
 interface OrderItem {
   name: string;
@@ -192,13 +193,33 @@ export default function KitchenMonitor() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-6 animate-fade-in">
       {/* Navigation buttons and Weather Dropdown */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between animate-slide-in-down">
         <div className="flex gap-2">
           <Link href="/dashboard">
-            <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-              ← Back to Dashboard
+            <button 
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center button-press transition-all duration-200 hover:shadow-md"
+              aria-label="Back to Dashboard"
+            >
+              <Tooltip text="Back to Dashboard" position="bottom">
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  ></path>
+                </svg>
+              </Tooltip>
+              Back to Dashboard
             </button>
           </Link>
           <Link href="/inventory-manager">
@@ -250,7 +271,7 @@ export default function KitchenMonitor() {
         </div>
       </div>
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-6 animate-slide-in-down">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-4xl font-bold text-gray-800">Kitchen Monitor</h1>
           <div className="flex items-center gap-3">
@@ -265,7 +286,7 @@ export default function KitchenMonitor() {
             </button>
           </div>
         </div>
-        <p className="text-gray-600">
+        <p className="text-gray-600 animate-fade-in animate-stagger-1">
           Active Orders: {orders.length}
         </p>
       </div>
@@ -273,15 +294,15 @@ export default function KitchenMonitor() {
       {/* Orders Grid */}
       <div className={`grid gap-4 ${isCompactView ? 'grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'}`}>
         {orders.length === 0 ? (
-          <div className="col-span-full text-center py-12">
+          <div className="col-span-full text-center py-12 animate-fade-in">
             <p className="text-2xl text-gray-500">No active orders</p>
             <p className="text-gray-400 mt-2">New orders will appear here automatically</p>
           </div>
         ) : (
-          orders.map((order) => (
+          orders.map((order, index) => (
             <div
               key={order.order_id}
-              className={`bg-white rounded-lg shadow-md border-2 border-gray-300 flex flex-col h-full ${isCompactView ? 'text-xs' : ''}`}
+              className={`bg-white rounded-lg shadow-md border-2 border-gray-300 flex flex-col h-full hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 5) + 1, 4)} ${isCompactView ? 'text-xs' : ''}`}
             >
               {/* Order Header */}
               <div className={`text-white ${isCompactView ? 'p-2' : 'p-3'} rounded-t-lg ${order.rush_order ? 'bg-red-600' : 'bg-gray-800'}`}>
@@ -341,7 +362,7 @@ export default function KitchenMonitor() {
                 ) : (
                   <button
                     onClick={() => markOrderDone(order.order_id)}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg button-press animate-bounce-in"
                   >
                     DONE
                   </button>

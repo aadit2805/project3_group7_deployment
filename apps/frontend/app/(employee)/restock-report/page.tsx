@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Tooltip from '@/app/components/Tooltip';
 
 const RestockReport = () => {
   const [foodItems, setFoodItems] = useState([]);
@@ -41,8 +42,28 @@ const RestockReport = () => {
     <div className="container mx-auto p-4">
       <div className="mb-4">
         <Link href="/dashboard">
-          <button className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
-            ← Back to Dashboard
+          <button 
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 inline-flex items-center"
+            aria-label="Back to Dashboard"
+          >
+            <Tooltip text="Back to Dashboard" position="bottom">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                ></path>
+              </svg>
+            </Tooltip>
+            Back to Dashboard
           </button>
         </Link>
       </div>

@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
+import prisma from '../config/prisma'; // Import centralized Prisma instance
 
+// Cache for rush orders and order notes (in-memory storage)
 const rushOrderCache = new Map<number, boolean>();
 const orderNotesCache = new Map<number, string>();
 
 export const createOrder = async (req: Request, res: Response) => {
-  const { order_items, customer_name, rush_order, order_notes } = req.body;
+  const { order_items, customer_name, rush_order, order_notes, customerId, pointsApplied } = req.body; // Added customer_name, rush_order, order_notes, customerId, pointsApplied
 
   if (!order_items || !Array.isArray(order_items) || order_items.length === 0) {
     return res.status(400).json({ success: false, error: 'Order items are required' });
@@ -15,6 +17,26 @@ export const createOrder = async (req: Request, res: Response) => {
 
   try {
     await client.query('BEGIN'); // Start transaction
+
+    let currentCustomerPoints = 0; // Initialize for point validation
+    const POINTS_PER_DOLLAR = 25; // Must match frontend logic
+
+    // If points are applied, fetch customer's current points and validate
+    if (customerId && pointsApplied && pointsApplied > 0) {
+      const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { rewards_points: true },
+      });
+
+      if (!customer) {
+        throw new Error('Customer not found for point application.');
+      }
+      currentCustomerPoints = customer.rewards_points;
+
+      if (pointsApplied > currentCustomerPoints) {
+        throw new Error('Not enough points to apply.');
+      }
+    }
 
     // Fetch all menu items and meal types for price lookup
     const menuItemsResult = await client.query('SELECT menu_item_id, upcharge FROM menu_items');
@@ -33,10 +55,10 @@ export const createOrder = async (req: Request, res: Response) => {
     const maxId = maxIdResult.rows[0].max_id;
     const newOrderId = (maxId === null ? 0 : maxId) + 1;
 
-    // Insert order with a temporary price (0)
+    // Insert order with a temporary price (0) and customerId
     const orderResult = await client.query(
-      'INSERT INTO "Order" (order_id, price, order_status, staff_id, datetime, customer_name) VALUES ($1, $2, $3, $4, NOW(), $5) RETURNING order_id',
-      [newOrderId, 0, 'pending', 1, customer_name || null]
+      'INSERT INTO "Order" (order_id, price, order_status, staff_id, datetime, customer_name, "customerId") VALUES ($1, $2, $3, $4, NOW(), $5, $6) RETURNING order_id',
+      [newOrderId, 0, 'pending', 1, customer_name || null, customerId || null] // Added customer_name and customerId
     );
     const orderId = orderResult.rows[0].order_id;
 
@@ -93,13 +115,38 @@ export const createOrder = async (req: Request, res: Response) => {
       }
       nextMealId++;
     }
+    
+    // Calculate final price after point deduction
+    let finalPrice = totalPrice;
+    if (pointsApplied && pointsApplied > 0) {
+        const discountValue = pointsApplied / POINTS_PER_DOLLAR;
+        finalPrice = Math.max(0, totalPrice - discountValue); // Ensure price doesn't go below 0
+    }
 
-    // Update the order with the calculated total price
-    await client.query('UPDATE "Order" SET price = $1 WHERE order_id = $2', [totalPrice, orderId]);
+    // Update the order with the calculated final price
+    await client.query('UPDATE "Order" SET price = $1 WHERE order_id = $2', [finalPrice, orderId]);
+
+    // Deduct points from customer and award new points (if applicable)
+    if (customerId) {
+        // Deduct applied points first
+        if (pointsApplied && pointsApplied > 0) {
+            await prisma.customer.update({
+                where: { id: customerId },
+                data: { rewards_points: { decrement: pointsApplied } },
+            });
+        }
+        
+        // Award new points based on final price after discount
+        const pointsEarned = Math.floor(finalPrice); // Example: 1 point per dollar spent on final price
+        await prisma.customer.update({
+            where: { id: customerId },
+            data: { rewards_points: { increment: pointsEarned } },
+        });
+    }
 
     await client.query('COMMIT'); // Commit transaction
 
-    return res.status(201).json({ success: true, data: { orderId, totalPrice } });
+    return res.status(201).json({ success: true, data: { orderId, totalPrice: finalPrice } });
   } catch (error) {
     await client.query('ROLLBACK'); // Rollback on error
     console.error('Error creating order:', error);
@@ -326,6 +373,92 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     client.release();
   }
 };
+
+export const getCustomerOrders = async (req: Request, res: Response) => {
+  const customerId = req.customer?.id; // Get customer ID from authenticated request
+
+  if (!customerId) {
+    return res.status(401).json({ success: false, error: 'Customer not authenticated' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    const ordersResult = await client.query(
+      `SELECT
+        o.order_id,
+        o.datetime AS order_date,
+        o.price AS total_price,
+        o."customerId",
+        (o.price / 1) AS points_earned -- Assuming 1 point per dollar for now, adjust as needed
+      FROM "Order" o
+      WHERE o."customerId" = $1
+      ORDER BY o.datetime DESC`,
+      [customerId]
+    );
+
+    const orders = [];
+
+    for (const orderRow of ordersResult.rows) {
+      const mealsResult = await client.query(
+        `SELECT
+          m.meal_id,
+          mt.meal_type_name,
+          mt.meal_type_id
+        FROM meal m
+        LEFT JOIN meal_types mt ON m.meal_type_id = mt.meal_type_id
+        WHERE m.order_id = $1
+        ORDER BY m.meal_id`,
+        [orderRow.order_id]
+      );
+
+      const orderItems = [];
+
+      for (const mealRow of mealsResult.rows) {
+        const itemsResult = await client.query(
+          `SELECT
+            md.role,
+            mi.name
+          FROM meal_detail md
+          LEFT JOIN menu_items mi ON md.menu_item_id = mi.menu_item_id
+          WHERE md.meal_id = $1
+          ORDER BY md.role, mi.name`,
+          [mealRow.meal_id]
+        );
+
+        const entrees = itemsResult.rows.filter(item => item.role === 'entree').map(item => ({ name: item.name }));
+        const sides = itemsResult.rows.filter(item => item.role === 'side').map(item => ({ name: item.name }));
+        const drink = itemsResult.rows.find(item => item.role === 'drink'); // Assuming one drink per meal
+
+        orderItems.push({
+          mealType: {
+            meal_type_name: mealRow.meal_type_name,
+            meal_type_id: mealRow.meal_type_id,
+          },
+          entrees,
+          sides,
+          drink: drink ? { name: drink.name } : undefined,
+        });
+      }
+
+      orders.push({
+        order_id: orderRow.order_id,
+        order_date: orderRow.order_date,
+        total_price: parseFloat(orderRow.total_price),
+        points_earned: parseInt(orderRow.points_earned),
+        order_items: orderItems,
+      });
+    }
+
+    return res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    console.error('Error fetching customer orders:', error);
+    return res.status(500).json({ success: false, error: (error as Error).message });
+  } finally {
+    client.release();
+  }
+};
+
 
 export const getPreparedOrders = async (_req: Request, res: Response) => {
   const client = await pool.connect();

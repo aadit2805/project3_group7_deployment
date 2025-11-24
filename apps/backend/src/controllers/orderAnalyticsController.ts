@@ -80,13 +80,25 @@ export const getAverageCompletionTime = async (req: Request, res: Response): Pro
 
     const result = await pool.query(query, queryParams);
 
-    const stats: CompletionTimeStats[] = result.rows.map((row) => ({
-      date: row.date.toISOString().split('T')[0],
-      average_completion_time_minutes: parseFloat(row.average_completion_time_minutes) || 0,
-      order_count: parseInt(row.order_count) || 0,
-      min_completion_time_minutes: parseFloat(row.min_completion_time_minutes) || 0,
-      max_completion_time_minutes: parseFloat(row.max_completion_time_minutes) || 0,
-    }));
+    const stats: CompletionTimeStats[] = result.rows.map((row) => {
+      // Handle date conversion - PostgreSQL DATE() returns a Date object or string
+      let dateStr: string;
+      if (row.date instanceof Date) {
+        dateStr = row.date.toISOString().split('T')[0];
+      } else if (typeof row.date === 'string') {
+        dateStr = row.date.split('T')[0];
+      } else {
+        dateStr = String(row.date);
+      }
+
+      return {
+        date: dateStr,
+        average_completion_time_minutes: parseFloat(row.average_completion_time_minutes) || 0,
+        order_count: parseInt(row.order_count) || 0,
+        min_completion_time_minutes: parseFloat(row.min_completion_time_minutes) || 0,
+        max_completion_time_minutes: parseFloat(row.max_completion_time_minutes) || 0,
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -144,6 +156,8 @@ export const getHourlyCompletionTime = async (req: Request, res: Response): Prom
     }
 
     const result = await pool.query(query, queryParams);
+
+    console.log(`[Order Analytics] Hourly stats query returned ${result.rows.length} rows`);
 
     const stats: HourlyCompletionTimeStats[] = result.rows.map((row) => ({
       hour: parseInt(row.hour) || 0,
@@ -208,7 +222,13 @@ export const getCompletionTimeSummary = async (req: Request, res: Response): Pro
 
     const result = await pool.query(query, queryParams);
 
-    if (result.rows.length === 0 || result.rows[0].total_completed_orders === '0') {
+    console.log(`[Order Analytics] Summary query returned ${result.rows.length} rows`);
+    if (result.rows.length > 0) {
+      console.log(`[Order Analytics] Summary data:`, result.rows[0]);
+    }
+
+    if (result.rows.length === 0 || result.rows[0].total_completed_orders === '0' || result.rows[0].total_completed_orders === 0) {
+      console.log('[Order Analytics] No completed orders found');
       res.status(200).json({
         success: true,
         data: {

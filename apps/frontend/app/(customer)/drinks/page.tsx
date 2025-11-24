@@ -4,6 +4,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import Link from 'next/link';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
+import Tooltip from '@/app/components/Tooltip';
+import VoiceSearchInput from '@/app/components/VoiceSearchInput';
 
 // Interfaces
 interface MenuItem {
@@ -27,6 +29,7 @@ const DrinksPage = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
   const [translatedMenuItems, setTranslatedMenuItems] = useState<Record<number, string>>({});
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const context = useContext(OrderContext);
   const { translateBatch, currentLanguage } = useTranslation();
 
@@ -39,6 +42,7 @@ const DrinksPage = () => {
     'Large',
     'Add',
     'Loading...',
+    'Search menu items',
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -52,6 +56,7 @@ const DrinksPage = () => {
     large: translatedTexts[5] || 'Large',
     add: translatedTexts[6] || 'Add',
     loading: translatedTexts[7] || 'Loading...',
+    searchMenuItems: translatedTexts[8] || 'Search menu items',
   };
 
   useEffect(() => {
@@ -131,21 +136,25 @@ const DrinksPage = () => {
         <Link
           href="/shopping-cart"
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
+          aria-label={t.shoppingCart}
         >
-          <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            ></path>
-          </svg>
+          <Tooltip text={t.shoppingCart} position="bottom">
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+              ></path>
+            </svg>
+          </Tooltip>
           {t.shoppingCart}
           {itemCount > 0 && (
             <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-sm">
@@ -158,29 +167,49 @@ const DrinksPage = () => {
         <Link
           href="/meal-type-selection"
           className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
+          aria-label={t.backToSelection}
         >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            ></path>
-          </svg>
+          <Tooltip text={t.backToSelection} position="bottom">
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              ></path>
+            </svg>
+          </Tooltip>
           {t.backToSelection}
         </Link>
       </div>
       <div className="grid grid-cols-1 gap-8">
         <div className="col-span-1">
           <section>
+            <div className="mb-4">
+              <VoiceSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t.searchMenuItems}
+                label={t.searchMenuItems}
+                id="drink-search"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {drinks.map((item) => (
+              {drinks
+                .filter((item) => {
+                  if (!searchQuery.trim()) return true;
+                  const searchLower = searchQuery.toLowerCase();
+                  const itemName = (translatedMenuItems[item.menu_item_id] || item.name).toLowerCase();
+                  return itemName.includes(searchLower);
+                })
+                .map((item) => (
                 <div key={item.menu_item_id} className="bg-white rounded-lg shadow-md p-6">
                   <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
                   <div className="flex flex-col space-y-2 mt-4">

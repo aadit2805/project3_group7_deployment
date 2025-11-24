@@ -47,7 +47,7 @@ app.use(
       secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
       httpOnly: true, // Prevent XSS attacks
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'lax', // CSRF protection
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     },
   })
 );
@@ -92,7 +92,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               googleId: profile.id,
               email,
               name: profile.displayName || undefined,
-              role: 'MANAGER', // default for now
+              role: 'CASHIER', // default for new users
             },
           });
           return done(null, user);
@@ -138,14 +138,16 @@ app.get(
   passport.authenticate('google', {
     failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=auth_failed`,
   }),
-  (_req: Request, res: Response) => {
+  (req: Request, res: Response) => {
     // Successful authentication
+    console.log('✅ OAuth Success! User:', req.user?.email, 'Session ID:', req.sessionID);
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard`);
   }
 );
 
 // Get current authenticated user
 app.get('/api/user', isAuthenticated, (req: Request, res: Response) => {
+  console.log('📋 /api/user - Authenticated! User:', req.user?.email);
   res.json({
     id: req.user!.id,
     email: req.user!.email,
@@ -200,6 +202,17 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Debug route to check env vars
+app.get('/debug/config', (_req: Request, res: Response) => {
+  res.json({
+    AUTH_URL: process.env.AUTH_URL,
+    FRONTEND_URL: process.env.FRONTEND_URL,
+    HAS_GOOGLE_CLIENT_ID: !!process.env.GOOGLE_CLIENT_ID,
+    CALLBACK_URL: `${process.env.AUTH_URL}/auth/google/callback`,
+    NODE_ENV: process.env.NODE_ENV,
   });
 });
 
