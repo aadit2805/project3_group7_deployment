@@ -4,6 +4,15 @@ import { PrismaClient } from '@prisma/client'; // Import PrismaClient
 
 const prisma = new PrismaClient(); // Initialize Prisma Client
 
+// Extend the Request object to include customer property
+declare global {
+  namespace Express {
+    interface Request {
+      customer?: { id: string };
+    }
+  }
+}
+
 export const createOrder = async (req: Request, res: Response) => {
   const { order_items, customer_name, customerId, pointsApplied } = req.body; // Added pointsApplied
 
@@ -354,3 +363,89 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     client.release();
   }
 };
+
+export const getCustomerOrders = async (req: Request, res: Response) => {
+  const customerId = req.customer?.id; // Get customer ID from authenticated request
+
+  if (!customerId) {
+    return res.status(401).json({ success: false, error: 'Customer not authenticated' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    const ordersResult = await client.query(
+      `SELECT
+        o.order_id,
+        o.datetime AS order_date,
+        o.price AS total_price,
+        o."customerId",
+        (o.price / 1) AS points_earned -- Assuming 1 point per dollar for now, adjust as needed
+      FROM "Order" o
+      WHERE o."customerId" = $1
+      ORDER BY o.datetime DESC`,
+      [customerId]
+    );
+
+    const orders = [];
+
+    for (const orderRow of ordersResult.rows) {
+      const mealsResult = await client.query(
+        `SELECT
+          m.meal_id,
+          mt.meal_type_name,
+          mt.meal_type_id
+        FROM meal m
+        LEFT JOIN meal_types mt ON m.meal_type_id = mt.meal_type_id
+        WHERE m.order_id = $1
+        ORDER BY m.meal_id`,
+        [orderRow.order_id]
+      );
+
+      const orderItems = [];
+
+      for (const mealRow of mealsResult.rows) {
+        const itemsResult = await client.query(
+          `SELECT
+            md.role,
+            mi.name
+          FROM meal_detail md
+          LEFT JOIN menu_items mi ON md.menu_item_id = mi.menu_item_id
+          WHERE md.meal_id = $1
+          ORDER BY md.role, mi.name`,
+          [mealRow.meal_id]
+        );
+
+        const entrees = itemsResult.rows.filter(item => item.role === 'entree').map(item => ({ name: item.name }));
+        const sides = itemsResult.rows.filter(item => item.role === 'side').map(item => ({ name: item.name }));
+        const drink = itemsResult.rows.find(item => item.role === 'drink'); // Assuming one drink per meal
+
+        orderItems.push({
+          mealType: {
+            meal_type_name: mealRow.meal_type_name,
+            meal_type_id: mealRow.meal_type_id,
+          },
+          entrees,
+          sides,
+          drink: drink ? { name: drink.name } : undefined,
+        });
+      }
+
+      orders.push({
+        order_id: orderRow.order_id,
+        order_date: orderRow.order_date,
+        total_price: parseFloat(orderRow.total_price),
+        points_earned: parseInt(orderRow.points_earned),
+        order_items: orderItems,
+      });
+    }
+
+    return res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    console.error('Error fetching customer orders:', error);
+    return res.status(500).json({ success: false, error: (error as Error).message });
+  } finally {
+    client.release();
+  }
+};
+

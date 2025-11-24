@@ -12,6 +12,7 @@ import {
   getActiveOrders,
   getKitchenOrders,
   updateOrderStatus,
+  getCustomerOrders, // Import getCustomerOrders
 } from '../controllers/orderController';
 import {
   getDailyRevenueReport,
@@ -36,6 +37,7 @@ import translationRoutes from './translation.routes';
 import weatherRoutes from './weather.routes';
 import inventoryRoutes from './inventory.routes';
 import { isAuthenticated, isManager, isCashierOrManager } from '../middleware/auth';
+import { authenticateCustomer } from '../middleware/customerAuth'; // Import authenticateCustomer
 import axios from 'axios';
 
 const router = Router();
@@ -59,6 +61,9 @@ router.get('/orders/active', isAuthenticated, isManager, getActiveOrders);
 
 // GET /api/orders/kitchen - Get detailed orders for kitchen monitor (cashier or manager)
 router.get('/orders/kitchen', isAuthenticated, isCashierOrManager, getKitchenOrders);
+
+// GET /api/orders/customer/:customerId - Get orders for a specific customer
+router.get('/orders/customer/:customerId', authenticateCustomer, getCustomerOrders);
 
 // PATCH /api/orders/:orderId/status - Update order status (manager only)
 router.patch('/orders/:orderId/status', isAuthenticated, isManager, updateOrderStatus);

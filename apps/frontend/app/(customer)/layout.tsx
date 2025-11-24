@@ -2,14 +2,15 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation'; // Import useRouter and usePathname
+import { useRouter, usePathname } from 'next/navigation';
 import LanguageSelector from '@/app/components/LanguageSelector';
 import { useTranslatedTexts } from '@/app/hooks/useTranslation';
 
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
-  const { translatedTexts } = useTranslatedTexts(['Home', 'Customer Kiosk']);
+  const { translatedTexts } = useTranslatedTexts(['Home', 'Customer Kiosk', 'My Profile']);
   const homeText = translatedTexts[0] || 'Home';
   const kioskText = translatedTexts[1] || 'Customer Kiosk';
+  const myProfileText = translatedTexts[2] || 'My Profile';
 
   const router = useRouter();
   const pathname = usePathname();
@@ -58,6 +59,14 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           <h1 className="text-2xl font-bold text-gray-800">{kioskText}</h1>
         </div>
         <div className="flex items-center gap-4">
+          {typeof window !== 'undefined' && localStorage.getItem('customerToken') && (
+            <Link
+              href="/my-profile"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm inline-flex items-center"
+            >
+              {myProfileText}
+            </Link>
+          )}
           {typeof window !== 'undefined' && localStorage.getItem('customerToken') ? (
             <button
               onClick={handleLogout}
