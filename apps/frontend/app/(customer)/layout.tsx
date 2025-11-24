@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation'; // Import useRouter and usePathname
 import LanguageSelector from '@/app/components/LanguageSelector';
 import { useTranslatedTexts } from '@/app/hooks/useTranslation';
 
@@ -9,6 +10,19 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   const { translatedTexts } = useTranslatedTexts(['Home', 'Customer Kiosk']);
   const homeText = translatedTexts[0] || 'Home';
   const kioskText = translatedTexts[1] || 'Customer Kiosk';
+
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Check if customerToken exists in localStorage
+    const customerToken = localStorage.getItem('customerToken');
+
+    // If no token and not already on the rewards-login page, redirect to rewards-login
+    if (!customerToken && pathname !== '/rewards-login') {
+      router.push('/rewards-login');
+    }
+  }, [pathname, router]); // Re-run effect if pathname or router changes
 
   return (
     <div className="w-full">

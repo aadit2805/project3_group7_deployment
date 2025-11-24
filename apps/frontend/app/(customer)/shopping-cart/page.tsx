@@ -29,6 +29,12 @@ const ShoppingCart = () => {
     'Order submitted successfully!',
     'Failed to submit order.',
     'An error occurred while submitting the order.',
+    'Your Points', // New
+    'Apply Points', // New
+    'Points Discount', // New
+    'Total After Discount', // New
+    'You have no points to apply.', // New
+    'Error fetching points.', // New
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -50,11 +56,82 @@ const ShoppingCart = () => {
     successMessage: translatedTexts[13] || 'Order submitted successfully!',
     failMessage: translatedTexts[14] || 'Failed to submit order.',
     errorMessage: translatedTexts[15] || 'An error occurred while submitting the order.',
+    yourPoints: translatedTexts[16] || 'Your Points',
+    applyPoints: translatedTexts[17] || 'Apply Points',
+    pointsDiscount: translatedTexts[18] || 'Points Discount',
+    totalAfterDiscount: translatedTexts[19] || 'Total After Discount',
+    noPoints: translatedTexts[20] || 'You have no points to apply.',
+    errorFetchingPoints: translatedTexts[21] || 'Error fetching points.',
   };
 
   const order = context?.order || [];
   const setOrder = context?.setOrder || (() => {});
-  const totalPrice = context?.totalPrice || 0;
+  const baseTotalPrice = context?.totalPrice || 0; // Renamed to baseTotalPrice
+
+  const [customerPoints, setCustomerPoints] = useState<number | null>(null);
+  const [usePoints, setUsePoints] = useState(false);
+  const [pointsApplied, setPointsApplied] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [fetchingPoints, setFetchingPoints] = useState(true);
+  const [pointsError, setPointsError] = useState<string | null>(null);
+
+  const POINTS_PER_DOLLAR = 25; // Define conversion rate
+
+  // Calculate total price including discount
+  const totalPrice = baseTotalPrice - discountAmount;
+
+  // Effect to fetch customer points
+  useEffect(() => {
+    const fetchPoints = async () => {
+      setFetchingPoints(true);
+      setPointsError(null);
+      const customerToken = localStorage.getItem('customerToken');
+      const customerId = localStorage.getItem('customerId');
+
+      if (!customerToken || !customerId) {
+        setCustomerPoints(null); // Not logged in
+        setFetchingPoints(false);
+        return;
+      }
+
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+        const response = await fetch(`${backendUrl}/api/customer/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${customerToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch customer points.');
+        }
+
+        const data = await response.json();
+        setCustomerPoints(data.customer.rewards_points);
+      } catch (err: any) {
+        console.error(t.errorFetchingPoints, err);
+        setPointsError(err.message || 'Error fetching points.');
+        setCustomerPoints(null);
+      } finally {
+        setFetchingPoints(false);
+      }
+    };
+
+    fetchPoints();
+  }, [baseTotalPrice, t.errorFetchingPoints]); // Re-fetch if baseTotalPrice changes
+
+  // Effect to calculate discount when points, usage, or total price changes
+  useEffect(() => {
+    if (usePoints && customerPoints !== null && customerPoints > 0 && baseTotalPrice > 0) {
+      const availableDiscountValue = customerPoints / POINTS_PER_DOLLAR;
+      const actualDiscount = Math.min(availableDiscountValue, baseTotalPrice);
+      setDiscountAmount(actualDiscount);
+      setPointsApplied(Math.floor(actualDiscount * POINTS_PER_DOLLAR));
+    } else {
+      setDiscountAmount(0);
+      setPointsApplied(0);
+    }
+  }, [usePoints, customerPoints, baseTotalPrice, POINTS_PER_DOLLAR]);
 
   // Translate all names in the order
   useEffect(() => {
@@ -102,7 +179,7 @@ const ShoppingCart = () => {
 
     translateOrderNames();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order, currentLanguage]);
+  }, [order, currentLanguage, translateBatch]);
 
   if (!context) {
     return null;
@@ -124,12 +201,25 @@ const ShoppingCart = () => {
   const handleSubmitOrder = async () => {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const customerId = localStorage.getItem('customerId'); // Retrieve customerId
+
+      const requestBody: { order_items: OrderItem[]; customerId?: string; pointsApplied?: number } = {
+        order_items: order
+      };
+
+      if (customerId) {
+        requestBody.customerId = customerId;
+        if (usePoints && pointsApplied > 0) {
+            requestBody.pointsApplied = pointsApplied;
+        }
+      }
+
       const response = await fetch(`${backendUrl}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ order_items: order }),
+        body: JSON.stringify(requestBody), // Use the modified requestBody
       });
 
       if (response.ok) {
@@ -276,19 +366,64 @@ const ShoppingCart = () => {
               })}
             </ul>
             <div className="mt-6 pt-4 border-t-2 border-gray-300">
-              <div className="flex justify-between items-center mb-4">
-                <p className="text-2xl font-bold" role="status" aria-live="polite">
-                  {t.total}: <span aria-label={`Total price ${totalPrice.toFixed(2)} dollars`}>${totalPrice.toFixed(2)}</span>
+              {/* Rewards Points Section */}
+              {(localStorage.getItem('customerToken') && !fetchingPoints) && (
+                <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <p className="text-xl font-semibold mb-2">{t.yourPoints}: <span className="text-yellow-700">{customerPoints !== null ? customerPoints : 'N/A'}</span></p>
+                  {customerPoints !== null && customerPoints > 0 && baseTotalPrice > 0 ? (
+                    <label className="flex items-center text-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="form-checkbox h-5 w-5 text-blue-600"
+                        checked={usePoints}
+                        onChange={() => setUsePoints(!usePoints)}
+                      />
+                      <span className="ml-2">{t.applyPoints}</span>
+                    </label>
+                  ) : (
+                    <p className="text-gray-600 text-sm">{t.noPoints}</p>
+                  )}
+                  {pointsError && <p className="text-red-500 text-sm mt-2">{pointsError}</p>}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-xl font-bold">
+                  {t.total}: <span aria-label={`Base total price ${baseTotalPrice.toFixed(2)} dollars`}>${baseTotalPrice.toFixed(2)}</span>
                 </p>
+              </div>
+
+              {usePoints && discountAmount > 0 && (
+                <>
+                  <div className="flex justify-between items-center mb-2 text-green-700">
+                    <p className="text-xl font-bold">
+                      {t.pointsDiscount}: <span aria-label={`Discount amount ${discountAmount.toFixed(2)} dollars`}>-${discountAmount.toFixed(2)}</span>
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-center mb-4 border-t pt-2 border-gray-300">
+                    <p className="text-2xl font-bold" role="status" aria-live="polite">
+                      {t.totalAfterDiscount}: <span aria-label={`Final total price ${totalPrice.toFixed(2)} dollars`}>${totalPrice.toFixed(2)}</span>
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {!usePoints || discountAmount === 0 ? (
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-2xl font-bold" role="status" aria-live="polite">
+                    {t.total}: <span aria-label={`Total price ${totalPrice.toFixed(2)} dollars`}>${totalPrice.toFixed(2)}</span>
+                  </p>
+                </div>
+              ) : null}
+
                 <button
                   onClick={handleSubmitOrder}
-                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full"
                   aria-label={`Submit order with ${order.length} item${order.length !== 1 ? 's' : ''}, total ${totalPrice.toFixed(2)} dollars`}
                 >
                   {t.submitOrder}
                 </button>
               </div>
-            </div>
           </>
         )}
       </section>

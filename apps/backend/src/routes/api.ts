@@ -106,12 +106,16 @@ router.get('/hello', (_req: Request, res: Response<ApiResponse<{ greeting: strin
 });
 
 import userRoutes from './user.routes';
+import customerAuthRoutes from './customerAuth.routes'; // Import the new customer auth routes
 // ... (other imports)
 
 // ... (other routes)
 
 // User management routes (manager only)
 router.use('/users', isAuthenticated, isManager, userRoutes);
+
+// Customer authentication routes
+router.use('/customer/auth', customerAuthRoutes); // Integrate new customer auth routes
 
 // External API routes
 router.use('/translation', translationRoutes);

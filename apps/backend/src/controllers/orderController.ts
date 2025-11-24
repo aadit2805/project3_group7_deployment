@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
+import { PrismaClient } from '@prisma/client'; // Import PrismaClient
+
+const prisma = new PrismaClient(); // Initialize Prisma Client
 
 export const createOrder = async (req: Request, res: Response) => {
-  const { order_items, customer_name } = req.body; // Added customer_name
+  const { order_items, customer_name, customerId, pointsApplied } = req.body; // Added pointsApplied
 
   if (!order_items || !Array.isArray(order_items) || order_items.length === 0) {
     return res.status(400).json({ success: false, error: 'Order items are required' });
@@ -12,6 +15,26 @@ export const createOrder = async (req: Request, res: Response) => {
 
   try {
     await client.query('BEGIN'); // Start transaction
+
+    let currentCustomerPoints = 0; // Initialize for point validation
+    const POINTS_PER_DOLLAR = 25; // Must match frontend logic
+
+    // If points are applied, fetch customer's current points and validate
+    if (customerId && pointsApplied && pointsApplied > 0) {
+      const customer = await prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { rewards_points: true },
+      });
+
+      if (!customer) {
+        throw new Error('Customer not found for point application.');
+      }
+      currentCustomerPoints = customer.rewards_points;
+
+      if (pointsApplied > currentCustomerPoints) {
+        throw new Error('Not enough points to apply.');
+      }
+    }
 
     // Fetch all menu items and meal types for price lookup
     const menuItemsResult = await client.query('SELECT menu_item_id, upcharge FROM menu_items');
@@ -30,10 +53,10 @@ export const createOrder = async (req: Request, res: Response) => {
     const maxId = maxIdResult.rows[0].max_id;
     const newOrderId = (maxId === null ? 0 : maxId) + 1;
 
-    // Insert order with a temporary price (0)
+    // Insert order with a temporary price (0) and customerId
     const orderResult = await client.query(
-      'INSERT INTO "Order" (order_id, price, order_status, staff_id, datetime, customer_name) VALUES ($1, $2, $3, $4, NOW(), $5) RETURNING order_id',
-      [newOrderId, 0, 'pending', 1, customer_name || null] // Added customer_name
+      'INSERT INTO "Order" (order_id, price, order_status, staff_id, datetime, customer_name, "customerId") VALUES ($1, $2, $3, $4, NOW(), $5, $6) RETURNING order_id',
+      [newOrderId, 0, 'pending', 1, customer_name || null, customerId || null] // Added customerId
     );
     const orderId = orderResult.rows[0].order_id;
 
@@ -82,13 +105,38 @@ export const createOrder = async (req: Request, res: Response) => {
       }
       nextMealId++;
     }
+    
+    // Calculate final price after point deduction
+    let finalPrice = totalPrice;
+    if (pointsApplied && pointsApplied > 0) {
+        const discountValue = pointsApplied / POINTS_PER_DOLLAR;
+        finalPrice = Math.max(0, totalPrice - discountValue); // Ensure price doesn't go below 0
+    }
 
-    // Update the order with the calculated total price
-    await client.query('UPDATE "Order" SET price = $1 WHERE order_id = $2', [totalPrice, orderId]);
+    // Update the order with the calculated final price
+    await client.query('UPDATE "Order" SET price = $1 WHERE order_id = $2', [finalPrice, orderId]);
+
+    // Deduct points from customer and award new points (if applicable)
+    if (customerId) {
+        // Deduct applied points first
+        if (pointsApplied && pointsApplied > 0) {
+            await prisma.customer.update({
+                where: { id: customerId },
+                data: { rewards_points: { decrement: pointsApplied } },
+            });
+        }
+        
+        // Award new points based on final price after discount
+        const pointsEarned = Math.floor(finalPrice); // Example: 1 point per dollar spent on final price
+        await prisma.customer.update({
+            where: { id: customerId },
+            data: { rewards_points: { increment: pointsEarned } },
+        });
+    }
 
     await client.query('COMMIT'); // Commit transaction
 
-    return res.status(201).json({ success: true, data: { orderId, totalPrice } });
+    return res.status(201).json({ success: true, data: { orderId, totalPrice: finalPrice } });
   } catch (error) {
     await client.query('ROLLBACK'); // Rollback on error
     console.error('Error creating order:', error);
