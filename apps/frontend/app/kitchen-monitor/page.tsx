@@ -30,6 +30,8 @@ interface WeatherData {
   temperature: number;
   city: string;
   country: string;
+  humidity: number;
+  description: string;
 }
 
 export default function KitchenMonitor() {
@@ -150,6 +152,8 @@ export default function KitchenMonitor() {
             temperature: data.weather.temperature,
             city: data.weather.city,
             country: data.weather.country,
+            humidity: data.weather.humidity,
+            description: data.weather.description,
           });
         }
       }
@@ -219,6 +223,8 @@ export default function KitchenMonitor() {
                   ) : weather ? (
                     <div className="text-center">
                       <div className="text-2xl font-bold text-gray-800">{Math.round(weather.temperature)}°C</div>
+                      <div className="text-sm font-medium text-gray-700 mt-1 capitalize">{weather.description}</div>
+                      <div className="text-sm text-gray-600 mt-1">Humidity: {weather.humidity}%</div>
                       <div className="text-xs text-gray-500 mt-1">{weather.city}, {weather.country}</div>
                     </div>
                   ) : (
