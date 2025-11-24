@@ -42,6 +42,11 @@ export default function DashboardPage() {
     );
   }
 
+  // Prepared Orders is available to all employees
+  allCards.push(
+    { href: "/prepared-orders", title: "Prepared Orders", description: "View and mark prepared orders as addressed." }
+  );
+
   return (
     <div className="animate-fade-in">
       <div className="mb-8 animate-slide-in-down">
