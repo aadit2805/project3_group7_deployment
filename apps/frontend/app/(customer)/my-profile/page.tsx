@@ -172,7 +172,7 @@ const MyProfile = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link href="/" className="inline-block bg-gray-200 hover:bg-gray-300 rounded-lg px-4 py-2 mb-6">
+      <Link href="/meal-type-selection" className="inline-block bg-gray-200 hover:bg-gray-300 rounded-lg px-4 py-2 mb-6">
         ← {t.backToHome}
       </Link>
       <h1 className="text-4xl font-bold mb-8">{t.myProfile}</h1>

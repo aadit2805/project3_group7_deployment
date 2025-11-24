@@ -42,7 +42,6 @@ const CustomerKioskContent = () => {
     'Upcharge',
     'Update Item',
     'Add to Order',
-    'Rewards', // Added for translation
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -57,7 +56,6 @@ const CustomerKioskContent = () => {
     upcharge: translatedTexts[6] || 'Upcharge',
     updateItem: translatedTexts[7] || 'Update Item',
     addToOrder: translatedTexts[8] || 'Add to Order',
-    rewards: translatedTexts[9] || 'Rewards', // Added for use
   };
 
   if (!context) {
@@ -193,26 +191,6 @@ const CustomerKioskContent = () => {
               {t.customizeYour} {translatedMealTypeName || selectedMealType.meal_type_name}
             </h1>
             <div className="flex space-x-4"> {/* Container for multiple links */}
-              <Link
-                href="/rewards"
-                className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
-              >
-                <svg // Example SVG for rewards, replace with actual icon if available
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M11.08 19.02l-4.5-4.5A.996.996 0 015 13.79V5a2 2 0 012-2h8a2 2 0 012 2v8.79a.996.996 0 01-.58.97l-4.5 4.5a2 2 0 01-2.82 0zM15 11h-2v2h2v-2z"
-                  ></path>
-                </svg>
-                {t.rewards}
-              </Link>
               <Link
                 href="/shopping-cart"
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
