@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useEmployee } from '@/app/context/EmployeeContext';
 
 interface User {
-  id: number;
-  name: string;
-  email: string;
+  id: number | string; // Can be number for Google users, or string for local staff (staff_id)
+  name?: string;
+  email?: string;
+  username?: string; // For local staff
   role: string;
   createdAt: string;
+  type: 'google' | 'local'; // Differentiate between Google and local staff
 }
 
 const EmployeeManagementPage = () => {
@@ -17,15 +19,63 @@ const EmployeeManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // State for password change modal
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+
+  // State for new staff creation modal
+  const [showCreateStaffModal, setShowCreateStaffModal] = useState(false);
+  const [newStaffUsername, setNewStaffUsername] = useState('');
+  const [newStaffRole, setNewStaffRole] = useState('CASHIER'); // Default role
+  const [newStaffPassword, setNewStaffPassword] = useState('');
+  const [newStaffConfirmPassword, setNewStaffConfirmPassword] = useState('');
+  const [createStaffError, setCreateStaffError] = useState<string | null>(null);
+  const [createStaffSuccess, setCreateStaffSuccess] = useState<string | null>(null);
+
+
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchAllEmployees = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch('/api/users');
-        if (!response.ok) {
-          throw new Error('Failed to fetch users.');
+        // Fetch Google OAuth users
+        const googleUsersResponse = await fetch('/api/users');
+        if (!googleUsersResponse.ok) {
+          throw new Error('Failed to fetch Google users.');
         }
-        const data = await response.json();
-        setUsers(data);
+        const googleUsersData: User[] = (await googleUsersResponse.json()).map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          createdAt: u.createdAt,
+          type: 'google',
+        }));
+
+        // Fetch local staff
+        const localStaffResponse = await fetch('/api/staff/local');
+        if (!localStaffResponse.ok) {
+          throw new Error('Failed to fetch local staff.');
+        }
+        const localStaffData: User[] = (await localStaffResponse.json()).map((s: any) => ({
+          id: `local-${s.staff_id}`, // Prefix local staff IDs to ensure uniqueness
+          name: s.username,
+          username: s.username, // Store username separately
+          role: s.role,
+          createdAt: s.createdAt,
+          type: 'local',
+        }));
+
+        // Combine and sort by creation date
+        const combinedUsers = [...googleUsersData, ...localStaffData].sort((a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+        
+        setUsers(combinedUsers);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -34,19 +84,35 @@ const EmployeeManagementPage = () => {
     };
 
     if (currentUser?.role === 'MANAGER') {
-      fetchUsers();
+      fetchAllEmployees();
     }
   }, [currentUser]);
 
-  const handleRoleChange = async (userId: number, newRole: string) => {
+  const handleRoleChange = async (userId: number | string, newRole: string) => {
+    // Only allow role changes for Google OAuth users for now
+    const userToUpdate = users.find(u => u.id === userId);
+    if (!userToUpdate) return;
+
     try {
-      const response = await fetch(`/api/users/${userId}/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
+      let response;
+      if (userToUpdate.type === 'google') {
+        response = await fetch(`/api/users/${userId}/role`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ role: newRole }),
+        });
+      } else { // userToUpdate.type === 'local'
+        const localStaffId = parseInt(String(userId).replace('local-', ''), 10);
+        response = await fetch(`/api/staff/local/${localStaffId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username: userToUpdate.username, role: newRole }), // Send current username and new role
+        });
+      }
 
       if (!response.ok) {
         throw new Error('Failed to update role.');
@@ -59,6 +125,178 @@ const EmployeeManagementPage = () => {
       );
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const handleNameChange = async (userId: number | string, newName: string) => {
+    const userToUpdate = users.find(u => u.id === userId);
+    if (!userToUpdate || userToUpdate.type === 'google') {
+      // Name changes for Google OAuth users are not handled here
+      return;
+    }
+
+    try {
+      const localStaffId = parseInt(String(userId).replace('local-', ''), 10);
+      const response = await fetch(`/api/staff/local/${localStaffId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: newName, role: userToUpdate.role }), // Send new username and current role
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update username.');
+      }
+
+      setUsers(
+        users.map((user) =>
+          user.id === userId ? { ...user, name: newName, username: newName } : user
+        )
+      );
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const [editingUserId, setEditingUserId] = useState<number | string | null>(null);
+  const [editingUserName, setEditingUserName] = useState<string>('');
+
+  const handleEditNameClick = (user: User) => {
+    if (user.type === 'local') {
+      setEditingUserId(user.id);
+      setEditingUserName(user.name || user.username || '');
+    }
+  };
+
+  const handleNameInputBlur = async (user: User) => {
+    if (editingUserId === user.id && user.type === 'local' && editingUserName !== (user.name || user.username)) {
+      await handleNameChange(user.id, editingUserName);
+    }
+    setEditingUserId(null);
+    setEditingUserName('');
+  };
+
+  const handleNameInputKeyPress = async (e: React.KeyboardEvent<HTMLInputElement>, user: User) => {
+    if (e.key === 'Enter') {
+      await handleNameInputBlur(user);
+    }
+  };
+
+  // Password modal handlers
+  const handleChangePasswordClick = (userId: number | string) => {
+    setSelectedUserId(userId);
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError(null);
+    setPasswordSuccess(null);
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match.');
+      return;
+    }
+
+    try {
+      const localStaffId = parseInt(String(selectedUserId).replace('local-', ''), 10);
+      const response = await fetch(`/api/staff/local/${localStaffId}/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update password.');
+      }
+
+      setPasswordSuccess('Password updated successfully!');
+      setShowPasswordModal(false); // Close modal on success
+      // Optionally, re-fetch users or update state if necessary (though password change doesn't alter displayed user data)
+    } catch (err: any) {
+      setPasswordError(err.message);
+    }
+  };
+
+  // New Staff Creation handlers
+  const handleCreateStaffSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateStaffError(null);
+    setCreateStaffSuccess(null);
+
+    if (!newStaffUsername) {
+      setCreateStaffError('Username is required.');
+      return;
+    }
+    if (newStaffPassword.length < 6) {
+      setCreateStaffError('Password must be at least 6 characters long.');
+      return;
+    }
+    if (newStaffPassword !== newStaffConfirmPassword) {
+      setCreateStaffError('Passwords do not match.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/staff/local', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: newStaffUsername,
+          role: newStaffRole,
+          password: newStaffPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create staff member.');
+      }
+
+      const createdStaff = await response.json();
+      setCreateStaffSuccess(`Staff member '${createdStaff.username}' created successfully!`);
+      // Add a small delay before closing the modal and clearing messages
+      setTimeout(() => {
+        setShowCreateStaffModal(false);
+        setCreateStaffSuccess(null); // Clear success message
+        setCreateStaffError(null); // Clear any lingering error message
+        setNewStaffUsername(''); // Clear form
+        setNewStaffRole('CASHIER');
+        setNewStaffPassword('');
+        setNewStaffConfirmPassword('');
+      }, 500); // Close after 0.5 seconds, giving message time to be seen
+
+      // Add the new staff member to the existing list
+                setUsers(prevUsers => {
+                  const newStaffMember = {
+                    id: `local-${createdStaff.staff_id}`,
+                    name: createdStaff.username,
+                    username: createdStaff.username,
+                    role: createdStaff.role,
+                    createdAt: createdStaff.createdAt,
+                    type: 'local',
+                  };
+                  const updatedUsers = [...prevUsers, newStaffMember];
+                  return updatedUsers.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                });
+      
+
+    } catch (err: any) {
+      setCreateStaffError(err.message);
     }
   };
   
@@ -75,23 +313,57 @@ const EmployeeManagementPage = () => {
   if (error) return <div className="text-center p-8 text-red-500">Error: {error}</div>;
 
   return (
-    <div>
+    <div className="relative"> {/* Added relative for modal positioning */}
       <h1 className="text-3xl font-bold mb-6">Employee Management</h1>
+      
+      {/* Add New Staff Button */}
+      <div className="mb-4">
+        <button
+          onClick={() => setShowCreateStaffModal(true)}
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+        >
+          Add New Local Staff
+        </button>
+      </div>
+
       <div className="bg-white shadow-md rounded-lg overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email/Username</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {users.map((user) => (
               <tr key={user.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {user.type === 'local' && editingUserId === user.id ? (
+                    <input
+                      type="text"
+                      value={editingUserName}
+                      onChange={(e) => setEditingUserName(e.target.value)}
+                      onBlur={() => handleNameInputBlur(user)}
+                      onKeyPress={(e) => handleNameInputKeyPress(e, user)}
+                      className="border rounded-md p-1 w-full"
+                      autoFocus
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span>{user.name}</span>
+                      {user.type === 'local' && (
+                        <button
+                          onClick={() => handleEditNameClick(user)}
+                          className="text-gray-500 hover:text-blue-600 focus:outline-none"
+                          aria-label="Edit Name"
+                        >
+                          &#9998; {/* Pencil icon */}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">{user.email || user.username || 'N/A'}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{user.type === 'google' ? 'Google OAuth' : 'Local'}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <select
                     value={user.role}
@@ -104,11 +376,164 @@ const EmployeeManagementPage = () => {
                   </select>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{new Date(user.createdAt).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                    {user.type === 'local' && (
+                        <button
+                            onClick={() => handleChangePasswordClick(user.id)}
+                            className="ml-2 px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
+                        >
+                            Change Password
+                        </button>
+                    )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Change Password</h2>
+            {passwordError && <p className="text-red-500 mb-4">{passwordError}</p>}
+            {passwordSuccess && <p className="text-green-500 mb-4">{passwordSuccess}</p>}
+            <form onSubmit={handlePasswordSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="newPassword">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="confirmPassword">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <button
+                  type="submit"
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Save Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create New Staff Modal */}
+      {showCreateStaffModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Add New Local Staff</h2>
+            {createStaffError && <p className="text-red-500 mb-4">{createStaffError}</p>}
+            {createStaffSuccess && <p className="text-green-500 mb-4">{createStaffSuccess}</p>}
+            <form onSubmit={handleCreateStaffSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="newStaffUsername">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="newStaffUsername"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={newStaffUsername}
+                  onChange={(e) => setNewStaffUsername(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="newStaffRole">
+                  Role
+                </label>
+                <select
+                  id="newStaffRole"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={newStaffRole}
+                  onChange={(e) => setNewStaffRole(e.target.value)}
+                  required
+                >
+                  <option value="CASHIER">Cashier</option>
+                  <option value="MANAGER">Manager</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="newStaffPassword">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="newStaffPassword"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={newStaffPassword}
+                  onChange={(e) => setNewStaffPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="newStaffConfirmPassword">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  id="newStaffConfirmPassword"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  value={newStaffConfirmPassword}
+                  onChange={(e) => setNewStaffConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <button
+                  type="submit"
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Create Staff
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateStaffModal(false);
+                    setCreateStaffError(null);
+                    setCreateStaffSuccess(null);
+                    setNewStaffUsername('');
+                    setNewStaffPassword('');
+                    setNewStaffConfirmPassword('');
+                  }}
+                  className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

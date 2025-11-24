@@ -31,6 +31,7 @@ import {
   getSalesTrends,
   getSalesSummary,
 } from '../controllers/salesAnalyticsController';
+import { getLocalStaffController, updateLocalStaffController, updateLocalStaffPasswordController, createLocalStaffController } from '../controllers/staffController'; // Import all staff controllers
 import { ApiResponse } from '../types';
 import pool from '../config/db';
 import translationRoutes from './translation.routes';
@@ -69,6 +70,12 @@ router.get('/orders/customer/:customerId', authenticateCustomer, getCustomerOrde
 router.patch('/orders/:orderId/status', isAuthenticated, isManager, updateOrderStatus);
 // PATCH /api/orders/:orderId/status - Update order status (cashier or manager - needed for kitchen monitor)
 router.patch('/orders/:orderId/status', isAuthenticated, isCashierOrManager, updateOrderStatus);
+
+// Staff routes (manager only)
+router.post('/staff/local', isAuthenticated, isManager, createLocalStaffController); // New route for creating local staff
+router.get('/staff/local', isAuthenticated, isManager, getLocalStaffController);
+router.put('/staff/local/:id', isAuthenticated, isManager, updateLocalStaffController); // New route for updating local staff
+router.put('/staff/local/:id/password', isAuthenticated, isManager, updateLocalStaffPasswordController); // New route for updating local staff password
 
 // Revenue Report routes (manager only)
 router.get('/revenue/daily', isAuthenticated, isManager, getDailyRevenueReport);
