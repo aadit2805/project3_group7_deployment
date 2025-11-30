@@ -56,6 +56,9 @@ export const createOrder = async (req: Request, res: Response) => {
     const maxId = maxIdResult.rows[0].max_id;
     const newOrderId = (maxId === null ? 0 : maxId) + 1;
 
+    const nowResult = await client.query('SELECT NOW() as current_time');
+    console.log('PostgreSQL NOW() output:', nowResult.rows[0].current_time);
+
     // Insert order with a temporary price (0) and customerId
     const orderResult = await client.query(
       'INSERT INTO "Order" (order_id, price, order_status, staff_id, datetime, customer_name, "customerId") VALUES ($1, $2, $3, $4, NOW(), $5, $6) RETURNING order_id',

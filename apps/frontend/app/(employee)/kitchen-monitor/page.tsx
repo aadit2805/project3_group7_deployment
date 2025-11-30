@@ -91,6 +91,7 @@ export default function KitchenMonitor() {
       const data = await response.json();
       if (data.success) {
         const newOrders = data.data as KitchenOrder[];
+        console.log('Raw datetime from backend:', newOrders.map(order => order.datetime)); // Log raw datetime
         const currentOrderIds = new Set(newOrders.map(order => order.order_id));
         const previousOrderIds = previousOrderIdsRef.current;
 
