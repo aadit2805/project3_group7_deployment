@@ -8,7 +8,6 @@ const orderNotesCache = new Map<number, string>();
 
 export const createOrder = async (req: Request, res: Response) => {
   const { order_items, customer_name, rush_order, order_notes, customerId, pointsApplied, staff_id } = req.body; // Added customer_name, rush_order, order_notes, customerId, pointsApplied, staff_id
-  console.log('Backend received staff_id:', staff_id);
 
   if (!order_items || !Array.isArray(order_items) || order_items.length === 0) {
     return res.status(400).json({ success: false, error: 'Order items are required' });
@@ -55,9 +54,6 @@ export const createOrder = async (req: Request, res: Response) => {
     const maxIdResult = await client.query('SELECT MAX(order_id) as max_id FROM "Order"');
     const maxId = maxIdResult.rows[0].max_id;
     const newOrderId = (maxId === null ? 0 : maxId) + 1;
-
-    const nowResult = await client.query('SELECT NOW() as current_time');
-    console.log('PostgreSQL NOW() output:', nowResult.rows[0].current_time);
 
     // Insert order with a temporary price (0) and customerId
     const orderResult = await client.query(

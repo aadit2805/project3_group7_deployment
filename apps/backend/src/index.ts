@@ -244,6 +244,5 @@ app.get('/', (_req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server running in timezone: ${new Date().toString()}`); // Log server timezone
   console.log(`Server running at http://localhost:${port}`);
 });

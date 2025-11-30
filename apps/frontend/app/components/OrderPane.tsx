@@ -75,8 +75,6 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
 
   const handleSubmitOrder = async () => {
     try {
-      console.log('User object in handleSubmitOrder (OrderPane):', user); // Add this line
-      console.log('Submitting order with staff_id (OrderPane):', user?.id); // Log staff_id
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
       const response = await fetch(`${backendUrl}/api/orders`, {
         method: 'POST',
