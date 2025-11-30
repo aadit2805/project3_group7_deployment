@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ClipboardList, Monitor, LayoutDashboard, UserCog, BarChart2, LogOut } from 'lucide-react';
 import { EmployeeContext } from '@/app/context/EmployeeContext';
+import { ToastProvider } from '@/app/components/ToastContainer';
 
 interface User {
   id: number;
@@ -69,6 +70,7 @@ const EmployeeLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <EmployeeContext.Provider value={{ user }}>
+      <ToastProvider>
       <div className="flex min-h-screen bg-gray-100">
         {/* Sidebar */}
         <aside className="hidden md:flex flex-col w-64 bg-gray-800 text-white animate-slide-in-down">
@@ -149,6 +151,7 @@ const EmployeeLayout = ({ children }: { children: ReactNode }) => {
           <main className="flex-1 p-4 md:p-8 overflow-y-auto animate-fade-in">{children}</main>
         </div>
       </div>
+      </ToastProvider>
     </EmployeeContext.Provider>
   );
 };
