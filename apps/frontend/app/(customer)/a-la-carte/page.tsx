@@ -139,8 +139,8 @@ const ALaCartePage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">{t.title}</h1>
+      <div className="flex flex-wrap justify-center sm:justify-between items-center mb-8 gap-y-4">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center sm:text-left">{t.title}</h1>
         <Link
           href="/shopping-cart"
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center"
@@ -219,7 +219,7 @@ const ALaCartePage = () => {
                   return itemName.includes(searchLower);
                 })
                 .map((item, index) => (
-                  <div key={item.menu_item_id} className={`bg-white rounded-lg shadow-md p-6 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}>
+                  <div key={item.menu_item_id} className={`bg-white rounded-lg shadow-md p-4 sm:p-6 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}>
                     <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
                     <div className="flex space-x-2 mt-4">
                       <button
@@ -266,7 +266,7 @@ const ALaCartePage = () => {
                   return itemName.includes(searchLower);
                 })
                 .map((item, index) => (
-                  <div key={item.menu_item_id} className={`bg-white rounded-lg shadow-md p-6 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}>
+                  <div key={item.menu_item_id} className={`bg-white rounded-lg shadow-md p-4 sm:p-6 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}>
                     <h3 className="text-xl font-bold mb-2">{translatedMenuItems[item.menu_item_id] || item.name}</h3>
                     <div className="flex space-x-2 mt-4">
                       <button

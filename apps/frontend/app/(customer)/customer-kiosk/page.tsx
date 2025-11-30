@@ -211,8 +211,8 @@ const CustomerKioskContent = () => {
       </div>
       {selectedMealType && (
         <>
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold">
+          <div className="flex flex-wrap justify-center sm:justify-between items-center mb-8 gap-y-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center sm:text-left">
               {t.customizeYour} {translatedMealTypeName || selectedMealType.meal_type_name}
             </h1>
             <Link
@@ -273,7 +273,7 @@ const CustomerKioskContent = () => {
                 .map((item, index) => (
                   <div
                     key={item.menu_item_id}
-                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${selectedEntrees.some((e) => e.menu_item_id === item.menu_item_id) ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
+                    className={`bg-white rounded-lg shadow-md p-4 sm:p-6 cursor-pointer border-2 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${selectedEntrees.some((e) => e.menu_item_id === item.menu_item_id) ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
                     onClick={() => handleSelectItem(item, 'entree')}
                   >
                     <h3 className="text-xl font-bold mb-2">
@@ -314,7 +314,7 @@ const CustomerKioskContent = () => {
                 .map((item, index) => (
                   <div
                     key={item.menu_item_id}
-                    className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${selectedSides.some((s) => s.menu_item_id === item.menu_item_id) ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
+                    className={`bg-white rounded-lg shadow-md p-4 sm:p-6 cursor-pointer border-2 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${selectedSides.some((s) => s.menu_item_id === item.menu_item_id) ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
                     onClick={() => handleSelectItem(item, 'side')}
                   >
                     <h3 className="text-xl font-bold mb-2">
@@ -356,7 +356,7 @@ const CustomerKioskContent = () => {
                   .map((item, index) => (
                     <div
                       key={item.menu_item_id}
-                      className={`bg-white rounded-lg shadow-md p-6 cursor-pointer border-2 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${selectedDrink?.menu_item_id === item.menu_item_id ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
+                      className={`bg-white rounded-lg shadow-md p-4 sm:p-6 cursor-pointer border-2 hover-scale transition-all duration-200 animate-scale-in animate-stagger-${Math.min((index % 4) + 1, 4)} ${selectedDrink?.menu_item_id === item.menu_item_id ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}`}
                       onClick={() => handleSelectItem(item, 'drink')}
                     >
                       <h3 className="text-xl font-bold mb-2">
@@ -371,7 +371,7 @@ const CustomerKioskContent = () => {
           <div className="text-center mb-8 animate-fade-in animate-stagger-2">
             <button
               onClick={handleAddOrUpdateOrder}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-xl hover:shadow-lg button-press transition-all duration-200 animate-bounce-in"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-lg sm:text-xl hover:shadow-lg button-press transition-all duration-200 animate-bounce-in"
               disabled={
                 selectedMealType &&
                 (selectedEntrees.length !== selectedMealType.entree_count ||

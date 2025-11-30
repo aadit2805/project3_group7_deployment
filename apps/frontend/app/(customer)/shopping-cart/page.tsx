@@ -265,8 +265,8 @@ const ShoppingCart = () => {
         </Link>
       </nav>
 
-      <section className="bg-gray-100 p-6 rounded-lg" aria-labelledby="cart-heading">
-        <h1 id="cart-heading" className="text-3xl font-semibold mb-4">
+      <section className="bg-gray-100 p-4 sm:p-6 rounded-lg" aria-labelledby="cart-heading">
+        <h1 id="cart-heading" className="text-2xl sm:text-3xl font-semibold mb-4 text-center sm:text-left">
           {t.title}
         </h1>
         {order.length === 0 ? (
@@ -301,8 +301,8 @@ const ShoppingCart = () => {
                     key={index}
                     className={`mb-4 pb-4 border-b border-gray-200 bg-white p-4 rounded hover-scale transition-all duration-200 animate-fade-in animate-stagger-${Math.min((index % 4) + 1, 4)}`}
                   >
-                    <div className="flex justify-between items-center">
-                      <h2 className="text-2xl font-bold">{mealName}</h2>
+                    <div className="flex flex-wrap justify-center sm:justify-between items-center gap-y-2">
+                      <h2 className="text-xl sm:text-2xl font-bold">{mealName}</h2>
                       <div role="group" aria-label={`Actions for ${mealName}`}>
                         <button
                           onClick={() => handleEditItem(index)}
@@ -422,8 +422,8 @@ const ShoppingCart = () => {
                 </div>
               )}
 
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-xl font-bold">
+              <div className="flex flex-wrap justify-center sm:justify-between items-center mb-2 gap-y-2">
+                <p className="text-lg sm:text-xl font-bold">
                   {t.total}:{' '}
                   <span aria-label={`Base total price ${baseTotalPrice.toFixed(2)} dollars`}>
                     ${baseTotalPrice.toFixed(2)}
@@ -433,16 +433,16 @@ const ShoppingCart = () => {
 
               {usePoints && discountAmount > 0 && (
                 <>
-                  <div className="flex justify-between items-center mb-2 text-green-700">
-                    <p className="text-xl font-bold">
+                  <div className="flex flex-wrap justify-center sm:justify-between items-center mb-2 text-green-700 gap-y-2">
+                    <p className="text-lg sm:text-xl font-bold">
                       {t.pointsDiscount}:{' '}
                       <span aria-label={`Discount amount ${discountAmount.toFixed(2)} dollars`}>
                         -${discountAmount.toFixed(2)}
                       </span>
                     </p>
                   </div>
-                  <div className="flex justify-between items-center mb-4 border-t pt-2 border-gray-300">
-                    <p className="text-2xl font-bold" role="status" aria-live="polite">
+                  <div className="flex flex-wrap justify-center sm:justify-between items-center mb-4 border-t pt-2 border-gray-300 gap-y-2">
+                    <p className="text-xl sm:text-2xl font-bold" role="status" aria-live="polite">
                       {t.totalAfterDiscount}:{' '}
                       <span aria-label={`Final total price ${totalPrice.toFixed(2)} dollars`}>
                         ${totalPrice.toFixed(2)}
@@ -453,8 +453,8 @@ const ShoppingCart = () => {
               )}
 
               {!usePoints || discountAmount === 0 ? (
-                <div className="flex justify-between items-center mb-4">
-                  <p className="text-2xl font-bold" role="status" aria-live="polite">
+                <div className="flex flex-wrap justify-center sm:justify-between items-center mb-4 gap-y-2">
+                  <p className="text-xl sm:text-2xl font-bold" role="status" aria-live="polite">
                     {t.total}:{' '}
                     <span aria-label={`Total price ${totalPrice.toFixed(2)} dollars`}>
                       ${totalPrice.toFixed(2)}
@@ -465,7 +465,7 @@ const ShoppingCart = () => {
 
               <button
                 onClick={handleSubmitOrder}
-                className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl hover:shadow-lg button-press transition-all duration-200 animate-bounce-in focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg sm:text-xl hover:shadow-lg button-press transition-all duration-200 animate-bounce-in focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 aria-label={`Submit order with ${order.length} item${order.length !== 1 ? 's' : ''}, total ${totalPrice.toFixed(2)} dollars`}
               >
                 {t.submitOrder}

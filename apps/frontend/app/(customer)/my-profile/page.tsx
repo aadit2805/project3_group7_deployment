@@ -175,9 +175,9 @@ const MyProfile = () => {
       <Link href="/meal-type-selection" className="inline-block bg-gray-200 hover:bg-gray-300 rounded-lg px-4 py-2 mb-6">
         ← {t.backToHome}
       </Link>
-      <h1 className="text-4xl font-bold mb-8">{t.myProfile}</h1>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 text-center sm:text-left">{t.myProfile}</h1>
 
-      <section className="bg-white shadow-md rounded-lg p-6 mb-8">
+      <section className="bg-white shadow-md rounded-lg p-4 sm:p-6 mb-8">
         <h2 className="text-2xl font-semibold mb-4">{t.currentPoints}</h2>
         <p className="text-3xl font-bold text-blue-600 mb-2">
           {customerPoints !== null ? customerPoints : 'N/A'}
@@ -187,7 +187,7 @@ const MyProfile = () => {
         </p>
       </section>
 
-      <section className="bg-white shadow-md rounded-lg p-6">
+      <section className="bg-white shadow-md rounded-lg p-4 sm:p-6">
         <h2 className="text-2xl font-semibold mb-4">{t.pastOrders}</h2>
         {pastOrders.length === 0 ? (
           <p className="text-lg text-gray-700">{t.noPastOrders}</p>

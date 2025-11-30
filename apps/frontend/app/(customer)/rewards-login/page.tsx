@@ -61,8 +61,8 @@ function RewardsLoginContent() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
-      <div className="z-10 max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-center mb-6">Customer Rewards</h1>
+      <div className="z-10 max-w-md w-full bg-white rounded-lg shadow-lg p-4 sm:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6">Customer Rewards</h1>
         <h2 className="text-xl text-center mb-6">{isRegistering ? 'Register' : 'Sign In'}</h2>
 
         {error && (

@@ -94,8 +94,8 @@ const MealTypeSelection = () => {
   
     return (
       <div className="container mx-auto px-4">
-        <header className="flex justify-between items-center my-8">
-          <h1 className="text-4xl font-bold">{t.title}</h1>
+        <header className="flex flex-wrap justify-center sm:justify-between items-center my-8 gap-y-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center sm:text-left">{t.title}</h1>
           <Link
             href="/shopping-cart"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg inline-flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -143,7 +143,7 @@ const MealTypeSelection = () => {
                 <li key={mealType.meal_type_id} className={`animate-scale-in animate-stagger-${Math.min(staggerDelay + 1, 4)}`}>
                   <Link
                     href={`/customer-kiosk?mealTypeId=${mealType.meal_type_id}`}
-                    className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg hover-scale transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="block bg-white rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg hover-scale transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     aria-label={`Select ${mealName}, priced at ${mealType.meal_type_price.toFixed(2)} dollars, includes ${mealType.entree_count} entree${mealType.entree_count !== 1 ? 's' : ''}, ${mealType.side_count} side${mealType.side_count !== 1 ? 's' : ''}${mealType.drink_size ? `, and a ${mealType.drink_size} drink` : ''}`}
                   >
                     <article>
@@ -178,7 +178,7 @@ const MealTypeSelection = () => {
           <li>
             <Link
               href="/a-la-carte"
-              className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="block bg-white rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               aria-label="Select a la carte option to create your own custom meal"
             >
               <article>
@@ -190,7 +190,7 @@ const MealTypeSelection = () => {
           <li>
             <Link
               href="/drinks"
-              className="block bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="block bg-white rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               aria-label="Select drinks option to choose a beverage"
             >
               <article>
