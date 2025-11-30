@@ -259,36 +259,7 @@ const CashierInterfaceContent = () => {
     }
   };
 
-  const handleSubmitOrder = async () => {
-    try {
-      console.log('User object in handleSubmitOrder:', user); // Add this line
-      console.log('Submitting order with staff_id:', user?.id); // Log staff_id
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/api/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          order_items: order,
-          rush_order: false,
-          staff_id: user?.id, // Include staff_id
-        }),
-      });
 
-      if (response.ok) {
-        alert(t.successMessage);
-        setOrder([]);
-        localStorage.removeItem('order');
-        router.push('/cashier-interface');
-      } else {
-        alert(t.failMessage);
-      }
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      alert(t.errorMessage);
-    }
-  };
 
   const handleSelectMealType = (mealType: MealType) => {
     setSelectedMealType(mealType);
@@ -629,16 +600,7 @@ const CashierInterfaceContent = () => {
         </div>
       )}
 
-      {/* Always visible Submit Order button */}
-      <div className="text-center mt-8">
-        <button
-          onClick={handleSubmitOrder}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl"
-          disabled={order.length === 0}
-        >
-          {t.submitOrder}
-        </button>
-      </div>
+
     </div>
   );
 };

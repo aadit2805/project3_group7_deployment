@@ -2,11 +2,13 @@
 
 import React, { useContext, useState } from 'react';
 import { OrderContext, OrderItem } from '@/app/context/OrderContext';
+import { EmployeeContext } from '@/app/context/EmployeeContext'; // Import EmployeeContext
 import { useRouter } from 'next/navigation';
 import { useTranslatedTexts } from '@/app/hooks/useTranslation';
 
 const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void }) => {
   const context = useContext(OrderContext);
+  const employeeContext = useContext(EmployeeContext); // Access EmployeeContext
   const router = useRouter();
   const [isRushOrder, setIsRushOrder] = useState<boolean>(false);
   const [orderNotes, setOrderNotes] = useState<string>('');
@@ -51,10 +53,11 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
     markAsRushOrder: translatedTexts[14] || 'Mark as Rush Order',
   };
 
-  if (!context) {
-    return null;
+  if (!context || !employeeContext) {
+    throw new Error('OrderPane must be used within an OrderProvider and EmployeeProvider');
   }
 
+  const { user } = employeeContext; // Get user from EmployeeContext
   const { order, setOrder, totalPrice } = context;
 
   const handleEditItem = (index: number) => {
@@ -72,13 +75,15 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
 
   const handleSubmitOrder = async () => {
     try {
+      console.log('User object in handleSubmitOrder (OrderPane):', user); // Add this line
+      console.log('Submitting order with staff_id (OrderPane):', user?.id); // Log staff_id
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
       const response = await fetch(`${backendUrl}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ order_items: order, rush_order: isRushOrder, order_notes: orderNotes }),
+        body: JSON.stringify({ order_items: order, rush_order: isRushOrder, order_notes: orderNotes, staff_id: user?.id }), // Include staff_id
       });
 
               if (response.ok) {
