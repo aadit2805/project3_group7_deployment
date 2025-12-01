@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ClipboardList, Monitor, LayoutDashboard, UserCog, BarChart2, LogOut } from 'lucide-react';
 import { EmployeeContext } from '@/app/context/EmployeeContext';
-import { ToastProvider } from '@/app/components/ToastContainer';
+import ToastProvider from '@/app/context/ToastContext';
 
 interface User {
   id: number;

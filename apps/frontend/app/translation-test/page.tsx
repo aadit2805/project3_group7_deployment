@@ -4,11 +4,14 @@ import { useState } from 'react';
 import LanguageSelector from '@/app/components/LanguageSelector';
 import { useTranslation, useTranslatedTexts } from '@/app/hooks/useTranslation';
 
+import { useToast } from '@/app/hooks/useToast';
+
 export default function TranslationTestPage() {
   const { currentLanguage, supportedLanguages, translate } = useTranslation();
   const [testText, setTestText] = useState('Hello');
   const [manualResult, setManualResult] = useState('');
   const [testing, setTesting] = useState(false);
+  const { addToast } = useToast();
 
   // Test automatic translation with the hook
   const textsToTranslate = [
@@ -61,10 +64,10 @@ export default function TranslationTestPage() {
       const translateData = await translateResponse.json();
       console.log('Translate endpoint:', translateResponse.ok ? '✅' : '❌', translateData);
 
-      alert('API tests complete! Check console for details.');
+      addToast({ message: 'API tests complete! Check console for details.', type: 'success' });
     } catch (error) {
       console.error('API test failed:', error);
-      alert('API test failed! Check console for details.');
+      addToast({ message: 'API test failed! Check console for details.', type: 'error' });
     }
   };
 

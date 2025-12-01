@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Tooltip from '@/app/components/Tooltip';
+import { useToast } from '@/app/hooks/useToast';
 
 interface CompletionTimeStats {
   date: string;
@@ -12,13 +13,11 @@ interface CompletionTimeStats {
   min_completion_time_minutes: number;
   max_completion_time_minutes: number;
 }
-
 interface HourlyCompletionTimeStats {
   hour: number;
   average_completion_time_minutes: number;
   order_count: number;
 }
-
 interface CompletionTimeSummary {
   overall_average_minutes: number;
   total_completed_orders: number;
@@ -26,14 +25,12 @@ interface CompletionTimeSummary {
   slowest_order_minutes: number;
   median_minutes: number;
 }
-
 interface User {
   id: number;
   email: string | null;
   name: string | null;
   role: string | null;
 }
-
 export default function OrderAnalyticsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -45,59 +42,16 @@ export default function OrderAnalyticsPage() {
   const [loadingStats, setLoadingStats] = useState(false);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-        const response = await fetch(`${backendUrl}/api/user`, {
-          credentials: 'include',
-        });
-
-        if (response.status === 401) {
-          router.push('/login');
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data');
-        }
-
-        const userData = await response.json();
-
-        if (userData.role !== 'MANAGER') {
-          setError('Access denied. Manager role required.');
-          return;
-        }
-
-        setUser(userData);
-      } catch (err) {
-        console.error('Error fetching user:', err);
-        setError('Failed to load user data');
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-    fetchAllStats();
-  }, [router]);
-
-  const fetchAllStats = async (start?: string, end?: string) => {
+  const { addToast } = useToast();
+  const fetchAllStats = useCallback(async (start?: string, end?: string) => {
     setLoadingStats(true);
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-
       // Fetch all stats in parallel
       const params = new URLSearchParams();
       if (start) params.append('start_date', start);
       if (end) params.append('end_date', end);
-
       const queryString = params.toString() ? `?${params.toString()}` : '';
-
       const [dailyRes, hourlyRes, summaryRes] = await Promise.all([
         fetch(`${backendUrl}/api/analytics/completion-time${queryString}`, {
           credentials: 'include',
@@ -109,7 +63,6 @@ export default function OrderAnalyticsPage() {
           credentials: 'include',
         }),
       ]);
-
       if (dailyRes.ok) {
         const dailyData = await dailyRes.json();
         if (dailyData.success) {
@@ -121,7 +74,6 @@ export default function OrderAnalyticsPage() {
         const errorData = await dailyRes.json().catch(() => ({}));
         console.error('Failed to fetch daily stats:', dailyRes.status, errorData);
       }
-
       if (hourlyRes.ok) {
         const hourlyData = await hourlyRes.json();
         if (hourlyData.success) {
@@ -133,7 +85,6 @@ export default function OrderAnalyticsPage() {
         const errorData = await hourlyRes.json().catch(() => ({}));
         console.error('Failed to fetch hourly stats:', hourlyRes.status, errorData);
       }
-
       if (summaryRes.ok) {
         const summaryData = await summaryRes.json();
         if (summaryData.success) {
@@ -147,12 +98,47 @@ export default function OrderAnalyticsPage() {
       }
     } catch (err) {
       console.error('Error fetching stats:', err);
-      alert('Failed to load analytics data');
+      addToast({
+        message: 'Failed to load analytics data',
+        type: 'error',
+      });
     } finally {
       setLoadingStats(false);
     }
-  };
-
+  }, [addToast]);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+        const response = await fetch(`${backendUrl}/api/user`, {
+          credentials: 'include',
+        });
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        const userData = await response.json();
+        if (userData.role !== 'MANAGER') {
+          setError('Access denied. Manager role required.');
+          return;
+        }
+        setUser(userData);
+      } catch (err) {
+        console.error('Error fetching user:', err);
+        setError('Failed to load user data');
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+    fetchAllStats();
+  }, [router, fetchAllStats]);
   const handleDateFilter = () => {
     if (startDate && endDate) {
       fetchAllStats(startDate, endDate);
@@ -160,13 +146,11 @@ export default function OrderAnalyticsPage() {
       fetchAllStats();
     }
   };
-
   const clearFilter = () => {
     setStartDate('');
     setEndDate('');
     fetchAllStats();
   };
-
   const formatMinutes = (minutes: number): string => {
     if (isNaN(minutes) || minutes === 0) return 'N/A';
     const hours = Math.floor(minutes / 60);
@@ -176,7 +160,6 @@ export default function OrderAnalyticsPage() {
     }
     return `${mins}m`;
   };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -185,13 +168,11 @@ export default function OrderAnalyticsPage() {
       day: 'numeric',
     });
   };
-
   const formatHour = (hour: number): string => {
     const period = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:00 ${period}`;
   };
-
   if (loading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -202,7 +183,6 @@ export default function OrderAnalyticsPage() {
       </main>
     );
   }
-
   if (error) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -213,7 +193,6 @@ export default function OrderAnalyticsPage() {
       </main>
     );
   }
-
   return (
     <main className="min-h-screen bg-gray-50 p-8 animate-fade-in">
       <div className="mb-4 animate-slide-in-down">
@@ -259,7 +238,6 @@ export default function OrderAnalyticsPage() {
             </button>
           </div>
         </div>
-
         {/* Date Filter */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6 animate-scale-in animate-stagger-2">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Date Range Filter</h2>
@@ -304,7 +282,6 @@ export default function OrderAnalyticsPage() {
             </div>
           </div>
         </div>
-
         {/* Summary Cards */}
         {summary && summary.total_completed_orders > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6 animate-scale-in animate-stagger-1">
@@ -348,7 +325,6 @@ export default function OrderAnalyticsPage() {
             </ul>
           </div>
         ) : null}
-
         {/* Hourly Breakdown */}
         {hourlyStats.length > 0 && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -419,7 +395,6 @@ export default function OrderAnalyticsPage() {
             )}
           </div>
         )}
-
         {/* Daily Breakdown */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Daily Completion Time Breakdown</h2>

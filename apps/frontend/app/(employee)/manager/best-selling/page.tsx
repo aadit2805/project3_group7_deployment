@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Tooltip from '@/app/components/Tooltip';
+import { useToast } from '@/app/hooks/useToast';
 
 interface BestSellingItem {
   menu_item_id: number;
@@ -15,28 +16,24 @@ interface BestSellingItem {
   upcharge: number;
   role: string;
 }
-
 interface SalesByCategory {
   category: string;
   total_quantity_sold: number;
   total_revenue: number;
   item_count: number;
 }
-
 interface SalesSummary {
   total_items_sold: number;
   total_quantity_sold: number;
   total_revenue: number;
   average_item_price: number;
 }
-
 interface User {
   id: number;
   email: string | null;
   name: string | null;
   role: string | null;
 }
-
 export default function BestSellingPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -49,59 +46,16 @@ export default function BestSellingPage() {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [itemTypeFilter, setItemTypeFilter] = useState<string>('');
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-        const response = await fetch(`${backendUrl}/api/user`, {
-          credentials: 'include',
-        });
-
-        if (response.status === 401) {
-          router.push('/login');
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data');
-        }
-
-        const userData = await response.json();
-
-        if (userData.role !== 'MANAGER') {
-          setError('Access denied. Manager role required.');
-          return;
-        }
-
-        setUser(userData);
-      } catch (err) {
-        console.error('Error fetching user:', err);
-        setError('Failed to load user data');
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-    fetchAllStats();
-  }, [router]);
-
-  const fetchAllStats = async (start?: string, end?: string, itemType?: string) => {
+  const { addToast } = useToast();
+  const fetchAllStats = useCallback(async (start?: string, end?: string, itemType?: string) => {
     setLoadingStats(true);
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-
       const params = new URLSearchParams();
       if (start) params.append('start_date', start);
       if (end) params.append('end_date', end);
       if (itemType) params.append('item_type', itemType);
-
       const queryString = params.toString() ? `?${params.toString()}` : '';
-
       const [bestSellingRes, categoryRes, summaryRes] = await Promise.all([
         fetch(`${backendUrl}/api/analytics/best-selling${queryString}`, {
           credentials: 'include',
@@ -113,21 +67,18 @@ export default function BestSellingPage() {
           credentials: 'include',
         }),
       ]);
-
       if (bestSellingRes.ok) {
         const data = await bestSellingRes.json();
         if (data.success) {
           setBestSellingItems(data.data);
         }
       }
-
       if (categoryRes.ok) {
         const data = await categoryRes.json();
         if (data.success) {
           setSalesByCategory(data.data);
         }
       }
-
       if (summaryRes.ok) {
         const data = await summaryRes.json();
         if (data.success) {
@@ -136,34 +87,65 @@ export default function BestSellingPage() {
       }
     } catch (err) {
       console.error('Error fetching stats:', err);
-      alert('Failed to load sales analytics');
+      addToast({
+        message: 'Failed to load sales analytics',
+        type: 'error',
+      });
     } finally {
       setLoadingStats(false);
     }
-  };
-
+  }, [addToast]);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+        const response = await fetch(`${backendUrl}/api/user`, {
+          credentials: 'include',
+        });
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        const userData = await response.json();
+        if (userData.role !== 'MANAGER') {
+          setError('Access denied. Manager role required.');
+          return;
+        }
+        setUser(userData);
+      } catch (err) {
+        console.error('Error fetching user:', err);
+        setError('Failed to load user data');
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+    fetchAllStats();
+  }, [router, fetchAllStats]);
   const handleDateFilter = () => {
     fetchAllStats(startDate, endDate, itemTypeFilter || undefined);
   };
-
   const clearFilter = () => {
     setStartDate('');
     setEndDate('');
     setItemTypeFilter('');
     fetchAllStats();
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
   };
-
   const capitalize = (str: string) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
-
   if (loading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -174,7 +156,6 @@ export default function BestSellingPage() {
       </main>
     );
   }
-
   if (error) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -185,7 +166,6 @@ export default function BestSellingPage() {
       </main>
     );
   }
-
   return (
     <main className="min-h-screen bg-gray-50 p-8 animate-fade-in">
       <div className="mb-4 animate-slide-in-down">
@@ -231,7 +211,6 @@ export default function BestSellingPage() {
             </button>
           </div>
         </div>
-
         {/* Date Filter */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6 animate-scale-in animate-stagger-2">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Filters</h2>
@@ -292,7 +271,6 @@ export default function BestSellingPage() {
             </div>
           </div>
         </div>
-
         {/* Summary Cards */}
         {summary && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
@@ -318,7 +296,6 @@ export default function BestSellingPage() {
             </div>
           </div>
         )}
-
         {/* Sales by Category */}
         {salesByCategory.length > 0 && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -348,7 +325,6 @@ export default function BestSellingPage() {
             </div>
           </div>
         )}
-
         {/* Best-Selling Items Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Best-Selling Items</h2>
@@ -461,3 +437,4 @@ export default function BestSellingPage() {
     </main>
   );
 }
+

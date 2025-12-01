@@ -5,7 +5,7 @@ import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { EmployeeContext } from '@/app/context/EmployeeContext'; // Import EmployeeContext
 import { useRouter } from 'next/navigation';
 import { useTranslatedTexts } from '@/app/hooks/useTranslation';
-import { useToast } from './ToastContainer';
+import { useToast } from '@/app/hooks/useToast';
 
 const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void }) => {
   const context = useContext(OrderContext);
@@ -13,7 +13,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
   const router = useRouter();
   const [isRushOrder, setIsRushOrder] = useState<boolean>(false);
   const [orderNotes, setOrderNotes] = useState<string>('');
-  const { showToast } = useToast();
+  const { addToast } = useToast();
 
   // Define all text labels that need translation
   const textLabels = [
@@ -88,7 +88,7 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
 
               if (response.ok) {
 
-                showToast(t.successMessage, 'success');
+                addToast({ message: t.successMessage, type: 'success' });
 
                 setOrder([]);
                 setIsRushOrder(false);
@@ -109,11 +109,12 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
               } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('Order submission failed:', errorData);
-        showToast(`${t.failMessage} ${errorData.error ? `\nError: ${errorData.error}` : ''}`, 'error');
+        addToast({ message: `${t.failMessage} ${errorData.error ? `
+Error: ${errorData.error}` : ''}`, type: 'error' });
       }
     } catch (error) {
       console.error('Error submitting order:', error);
-      showToast(t.errorMessage, 'error');
+      addToast({ message: t.errorMessage, type: 'error' });
     }
   };
 

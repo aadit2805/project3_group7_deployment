@@ -5,6 +5,7 @@ import { OrderProvider } from './context/OrderContext';
 import { TranslationProvider } from './context/TranslationContext';
 import { AccessibilityProvider } from './context/AccessibilityContext';
 import AccessibilityMenu from './components/AccessibilityMenu';
+import ToastProvider from './context/ToastContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -26,10 +27,12 @@ export default function RootLayout({
         </a>
         <AccessibilityProvider>
           <TranslationProvider>
-            <OrderProvider>
-              <main id="main-content">{children}</main>
-              <AccessibilityMenu />
-            </OrderProvider>
+            <ToastProvider>
+              <OrderProvider>
+                <main id="main-content">{children}</main>
+                <AccessibilityMenu />
+              </OrderProvider>
+            </ToastProvider>
           </TranslationProvider>
         </AccessibilityProvider>
       </body>

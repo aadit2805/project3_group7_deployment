@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+import { useToast } from '@/app/hooks/useToast';
+
 interface PreparedOrder {
   order_id: number;
   customer_name: string;
@@ -17,6 +19,7 @@ export default function PreparedOrdersPage() {
   const [preparedOrders, setPreparedOrders] = useState<PreparedOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   // Fetch prepared orders
   const fetchPreparedOrders = useCallback(async () => {
@@ -69,10 +72,13 @@ export default function PreparedOrdersPage() {
       setPreparedOrders((prev) => prev.filter((order) => order.order_id !== orderId));
     } catch (err) {
       console.error('Error marking order as addressed:', err);
-      alert('Failed to mark order as addressed');
+      addToast({
+        message: 'Failed to mark order as addressed',
+        type: 'error',
+      });
     }
-  };
-
+   };
+  
   // Fetch prepared orders on mount and poll for updates
   useEffect(() => {
     fetchPreparedOrders();

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Tooltip from '@/app/components/Tooltip';
 
+import { useToast } from '@/app/hooks/useToast';
+
 const InventoryManager = () => {
   const [foodInventory, setFoodInventory] = useState([]);
   const [nonFoodInventory, setNonFoodInventory] = useState([]);
@@ -16,6 +18,7 @@ const InventoryManager = () => {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [activeTab, setActiveTab] = useState<'food' | 'non-food'>('food');
+  const { addToast } = useToast();
 
   useEffect(() => {
     fetchData();
@@ -114,10 +117,17 @@ const InventoryManager = () => {
       } else {
         const errorData = await res.json();
         console.error('Failed to save item:', errorData.error || res.statusText);
-        alert(`Failed to save item: ${errorData.error || res.statusText}`);
+        addToast({
+          message: `Failed to save item: ${errorData.error || res.statusText}`,
+          type: 'error',
+        });
       }
     } catch (error) {
       console.error('Failed to save item', error);
+      addToast({
+        message: 'Failed to save item',
+        type: 'error',
+      });
     }
   };
 

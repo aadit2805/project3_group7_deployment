@@ -3,7 +3,7 @@
 import { useEmployee } from '@/app/context/EmployeeContext';
 import ConfirmationModal from '@/app/components/ConfirmationModal';
 import React, { useState, useEffect } from 'react';
-import { useToast } from '../../../components/ToastContainer';
+import { useToast } from '@/app/hooks/useToast';
 
 interface User {
   id: number | string; // Can be number for Google users, or string for local staff (staff_id)
@@ -49,7 +49,7 @@ const EmployeeManagementPage = () => {
   const [confirmAction, setConfirmAction] = useState<(() => Promise<void>) | null>(null);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmTitle, setConfirmTitle] = useState('');
-  const { showToast } = useToast();
+  const { addToast } = useToast();
 
 
 
@@ -93,7 +93,7 @@ const EmployeeManagementPage = () => {
         
         setUsers(combinedUsers);
       } catch (err: any) {
-        showToast(err.message, 'error');
+        addToast({ message: err.message, type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -102,14 +102,14 @@ const EmployeeManagementPage = () => {
     if (currentUser?.role === 'MANAGER') {
       fetchAllEmployees();
     }
-  }, [currentUser, showToast]);
+  }, [currentUser, addToast]);
 
   const handleRoleChange = async (userId: number | string, newRole: string) => {
     const userToUpdate = users.find(u => u.id === userId);
     if (!userToUpdate) return;
 
     if (currentUser?.id === userId) {
-      showToast("You cannot change your own role.", 'error');
+      addToast({ message: "You cannot change your own role.", type: 'error' });
       return;
     }
 
@@ -146,10 +146,10 @@ const EmployeeManagementPage = () => {
             user.id === userId ? { ...user, role: newRole } : user
           )
         );
-        showToast('Role updated successfully!', 'success');
+        addToast({ message: 'Role updated successfully!', type: 'success' });
         setShowConfirmModal(false);
       } catch (err: any) {
-        showToast(err.message, 'error');
+        addToast({ message: err.message, type: 'error' });
         setShowConfirmModal(false);
       }
     });
@@ -185,10 +185,10 @@ const EmployeeManagementPage = () => {
             user.id === userId ? { ...user, name: newName, username: newName } : user
           )
         );
-        showToast('Name updated successfully!', 'success');
+        addToast({ message: 'Name updated successfully!', type: 'success' });
         setShowConfirmModal(false);
       } catch (err: any) {
-        showToast(err.message, 'error');
+        addToast({ message: err.message, type: 'error' });
         setShowConfirmModal(false);
       }
     });
@@ -235,11 +235,11 @@ const EmployeeManagementPage = () => {
     setPasswordSuccess(null);
 
     if (newPassword.length < 6) {
-      showToast('Password must be at least 6 characters long.', 'error');
+      addToast({ message: 'Password must be at least 6 characters long.', type: 'error' });
       return;
     }
     if (newPassword !== confirmPassword) {
-      showToast('Passwords do not match.', 'error');
+      addToast({ message: 'Passwords do not match.', type: 'error' });
       return;
     }
 
@@ -258,11 +258,11 @@ const EmployeeManagementPage = () => {
         throw new Error(errorData.message || 'Failed to update password.');
       }
 
-      showToast('Password updated successfully!', 'success');
+      addToast({ message: 'Password updated successfully!', type: 'success' });
       setShowPasswordModal(false); // Close modal on success
       // Optionally, re-fetch users or update state if necessary (though password change doesn't alter displayed user data)
     } catch (err: any) {
-      showToast(err.message, 'error');
+      addToast({ message: err.message, type: 'error' });
     }
   };
 
@@ -273,15 +273,15 @@ const EmployeeManagementPage = () => {
     setCreateStaffSuccess(null);
 
     if (!newStaffUsername) {
-      showToast('Username is required.', 'error');
+      addToast({ message: 'Username is required.', type: 'error' });
       return;
     }
     if (newStaffPassword.length < 6) {
-      showToast('Password must be at least 6 characters long.', 'error');
+      addToast({ message: 'Password must be at least 6 characters long.', type: 'error' });
       return;
     }
     if (newStaffPassword !== newStaffConfirmPassword) {
-      showToast('Passwords do not match.', 'error');
+      addToast({ message: 'Passwords do not match.', type: 'error' });
       return;
     }
 
@@ -304,7 +304,7 @@ const EmployeeManagementPage = () => {
       }
 
       const createdStaff: { staff_id: number; username: string; role: string; createdAt: string; } = await response.json();
-      showToast(`Staff member '${createdStaff.username}' created successfully!`, 'success');
+      addToast({ message: `Staff member '${createdStaff.username}' created successfully!`, type: 'success' });
       // Add a small delay before closing the modal and clearing messages
       setTimeout(() => {
         setShowCreateStaffModal(false);
@@ -331,7 +331,7 @@ const EmployeeManagementPage = () => {
       
 
     } catch (err: any) {
-      showToast(err.message, 'error');
+      addToast({ message: err.message, type: 'error' });
     }
   };
 

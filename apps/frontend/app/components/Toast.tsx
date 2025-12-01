@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircleIcon, ExclamationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline'; // Importing icons
 
-interface ToastProps {
+export interface ToastProps {
   message: string;
   type: 'success' | 'error';
   duration?: number; // Duration in milliseconds

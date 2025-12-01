@@ -7,11 +7,14 @@ import { OrderContext, OrderItem } from '@/app/context/OrderContext';
 import { useTranslatedTexts, useTranslation } from '@/app/hooks/useTranslation';
 import Tooltip from '@/app/components/Tooltip';
 
+import { useToast } from '@/app/hooks/useToast';
+
 const ShoppingCart = () => {
   const context = useContext(OrderContext);
   const router = useRouter();
   const { translateBatch, currentLanguage } = useTranslation();
   const [translatedNames, setTranslatedNames] = useState<Record<string, string>>({});
+  const { addToast } = useToast();
 
   const textLabels = [
     'Back to Ordering',
@@ -225,16 +228,16 @@ const ShoppingCart = () => {
       });
 
       if (response.ok) {
-        alert(t.successMessage);
+        addToast({ message: t.successMessage, type: 'success' });
         setOrder([]);
         localStorage.removeItem('order');
         router.push('/meal-type-selection');
       } else {
-        alert(t.failMessage);
+        addToast({ message: t.failMessage, type: 'error' });
       }
     } catch (error) {
       console.error('Error submitting order:', error);
-      alert(t.errorMessage);
+      addToast({ message: t.errorMessage, type: 'error' });
     }
   };
 

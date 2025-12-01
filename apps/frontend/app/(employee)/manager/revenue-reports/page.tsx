@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Tooltip from '@/app/components/Tooltip';
+
+import { useToast } from '@/app/hooks/useToast';
 
 interface DailyRevenueReport {
   date: string;
@@ -13,7 +15,6 @@ interface DailyRevenueReport {
   total_tax: number;
   net_sales: number;
 }
-
 interface RevenueSummary {
   total_revenue: number;
   total_orders: number;
@@ -21,14 +22,12 @@ interface RevenueSummary {
   average_daily_revenue: number;
   average_order_value: number;
 }
-
 interface User {
   id: number;
   email: string | null;
   name: string | null;
   role: string | null;
 }
-
 export default function RevenueReportsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -39,6 +38,63 @@ export default function RevenueReportsPage() {
   const [loadingReports, setLoadingReports] = useState(false);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const { addToast } = useToast();
+  const fetchReports = useCallback(async (start?: string, end?: string) => {
+    setLoadingReports(true);
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      let url = `${backendUrl}/api/revenue/daily`;
+      const params = new URLSearchParams();
+      if (start) params.append('start_date', start);
+      if (end) params.append('end_date', end);
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      const response = await fetch(url, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch revenue reports');
+      }
+      const data = await response.json();
+      if (data.success) {
+        setReports(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching reports:', err);
+      addToast({
+        message: 'Failed to load revenue reports',
+        type: 'error',
+      });
+    } finally {
+      setLoadingReports(false);
+    }
+  }, [addToast]);
+
+  const fetchSummary = useCallback(async (start?: string, end?: string) => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      let url = `${backendUrl}/api/revenue/summary`;
+      const params = new URLSearchParams();
+      if (start) params.append('start_date', start);
+      if (end) params.append('end_date', end);
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      const response = await fetch(url, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch revenue summary');
+      }
+      const data = await response.json();
+      if (data.success) {
+        setSummary(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching summary:', err);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -47,23 +103,18 @@ export default function RevenueReportsPage() {
         const response = await fetch(`${backendUrl}/api/user`, {
           credentials: 'include',
         });
-
         if (response.status === 401) {
           router.push('/login');
           return;
         }
-
         if (!response.ok) {
           throw new Error('Failed to fetch user data');
         }
-
         const userData = await response.json();
-
         if (userData.role !== 'MANAGER') {
           setError('Access denied. Manager role required.');
           return;
         }
-
         setUser(userData);
       } catch (err) {
         console.error('Error fetching user:', err);
@@ -75,76 +126,10 @@ export default function RevenueReportsPage() {
         setLoading(false);
       }
     };
-
     fetchUser();
     fetchReports();
     fetchSummary();
-  }, [router]);
-
-  const fetchReports = async (start?: string, end?: string) => {
-    setLoadingReports(true);
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      let url = `${backendUrl}/api/revenue/daily`;
-
-      const params = new URLSearchParams();
-      if (start) params.append('start_date', start);
-      if (end) params.append('end_date', end);
-
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-
-      const response = await fetch(url, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch revenue reports');
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setReports(data.data);
-      }
-    } catch (err) {
-      console.error('Error fetching reports:', err);
-      alert('Failed to load revenue reports');
-    } finally {
-      setLoadingReports(false);
-    }
-  };
-
-  const fetchSummary = async (start?: string, end?: string) => {
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      let url = `${backendUrl}/api/revenue/summary`;
-
-      const params = new URLSearchParams();
-      if (start) params.append('start_date', start);
-      if (end) params.append('end_date', end);
-
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-
-      const response = await fetch(url, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch revenue summary');
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setSummary(data.data);
-      }
-    } catch (err) {
-      console.error('Error fetching summary:', err);
-    }
-  };
-
+  }, [router, fetchReports, fetchSummary]);
   const handleDateFilter = () => {
     if (startDate && endDate) {
       fetchReports(startDate, endDate);
@@ -154,35 +139,28 @@ export default function RevenueReportsPage() {
       fetchSummary();
     }
   };
-
   const clearFilter = () => {
     setStartDate('');
     setEndDate('');
     fetchReports();
     fetchSummary();
   };
-
   const handleDownloadCSV = async () => {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
       let url = `${backendUrl}/api/revenue/export/csv`;
-
       const params = new URLSearchParams();
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
-
       if (params.toString()) {
         url += `?${params.toString()}`;
       }
-
       const response = await fetch(url, {
         credentials: 'include',
       });
-
       if (!response.ok) {
         throw new Error('Failed to export CSV');
       }
-
       // Get filename from Content-Disposition header or generate one
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = 'revenue-report.csv';
@@ -192,7 +170,6 @@ export default function RevenueReportsPage() {
           filename = filenameMatch[1];
         }
       }
-
       // Get the CSV content
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
@@ -205,17 +182,18 @@ export default function RevenueReportsPage() {
       window.URL.revokeObjectURL(downloadUrl);
     } catch (err) {
       console.error('Error downloading CSV:', err);
-      alert('Failed to download CSV file');
+      addToast({
+        message: 'Failed to download CSV file',
+        type: 'error',
+      });
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
     }).format(amount);
   };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -224,7 +202,6 @@ export default function RevenueReportsPage() {
       day: 'numeric',
     });
   };
-
   if (loading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -235,7 +212,6 @@ export default function RevenueReportsPage() {
       </main>
     );
   }
-
   if (error) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -246,10 +222,8 @@ export default function RevenueReportsPage() {
       </main>
     );
   }
-
   const totalRevenue = reports.reduce((sum, report) => sum + report.total_sales, 0);
   const totalOrders = reports.reduce((sum, report) => sum + report.order_count, 0);
-
   return (
     <main className="min-h-screen bg-gray-50 p-8 animate-fade-in">
       <div className="mb-4 animate-slide-in-down">
@@ -324,7 +298,6 @@ export default function RevenueReportsPage() {
             </div>
           </div>
         </div>
-
         {/* Date Filter */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6 animate-scale-in animate-stagger-2">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Date Range Filter</h2>
@@ -369,7 +342,6 @@ export default function RevenueReportsPage() {
             </div>
           </div>
         </div>
-
         {/* Summary Cards */}
         {summary && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
@@ -395,7 +367,6 @@ export default function RevenueReportsPage() {
             </div>
           </div>
         )}
-
         {/* Reports Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Daily Reports</h2>

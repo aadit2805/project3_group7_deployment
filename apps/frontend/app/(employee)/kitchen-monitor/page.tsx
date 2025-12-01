@@ -4,18 +4,17 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Tooltip from '@/app/components/Tooltip';
+import { useToast } from '@/app/hooks/useToast';
 
 interface OrderItem {
   name: string;
   role: string;
 }
-
 interface Meal {
   meal_id: number;
   meal_type_name: string;
   items: OrderItem[];
 }
-
 interface KitchenOrder {
   order_id: number;
   customer_name: string;
@@ -26,7 +25,6 @@ interface KitchenOrder {
   order_notes?: string | null;
   meals: Meal[];
 }
-
 interface WeatherData {
   temperature: number;
   city: string;
@@ -34,7 +32,6 @@ interface WeatherData {
   humidity: number;
   description: string;
 }
-
 export default function KitchenMonitor() {
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,16 +42,14 @@ export default function KitchenMonitor() {
   const [weatherLoading, setWeatherLoading] = useState(false);
   const router = useRouter();
   const previousOrderIdsRef = useRef<Set<number>>(new Set());
-
+  const { addToast } = useToast();
   const playBingSound = useCallback(() => {
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-
       oscillator.frequency.value = 800;
       oscillator.type = 'sine';
       
@@ -62,14 +57,12 @@ export default function KitchenMonitor() {
       gainNode.gain.setValueAtTime(0, now);
       gainNode.gain.linearRampToValueAtTime(0.6, now + 0.01);
       gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-
       oscillator.start(now);
       oscillator.stop(now + 0.15);
     } catch (err) {
       console.debug('Could not play sound:', err);
     }
   }, []);
-
   // Fetch orders from the API
   const fetchOrders = useCallback(async () => {
     try {
@@ -77,29 +70,23 @@ export default function KitchenMonitor() {
       const response = await fetch(`${backendUrl}/api/orders/kitchen`, {
         credentials: 'include',
       });
-
       if (response.status === 401) {
         // Not authenticated, redirect to login
         router.push('/login');
         return;
       }
-
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
       }
-
       const data = await response.json();
       if (data.success) {
         const newOrders = data.data as KitchenOrder[];
         const currentOrderIds = new Set(newOrders.map(order => order.order_id));
         const previousOrderIds = previousOrderIdsRef.current;
-
         const hasNewOrders = newOrders.some(order => !previousOrderIds.has(order.order_id));
-
         if (previousOrderIds.size > 0 && hasNewOrders) {
           playBingSound();
         }
-
         previousOrderIdsRef.current = currentOrderIds;
         setOrders(newOrders);
         setError(null);
@@ -111,7 +98,6 @@ export default function KitchenMonitor() {
       setLoading(false);
     }
   }, [router, playBingSound]);
-
   // Mark order as done
   const markOrderDone = async (orderId: number) => {
     try {
@@ -124,19 +110,19 @@ export default function KitchenMonitor() {
         credentials: 'include',
         body: JSON.stringify({ status: 'completed' }),
       });
-
       if (!response.ok) {
         throw new Error('Failed to update order status');
       }
-
       // Refresh orders after marking as done
       fetchOrders();
     } catch (err) {
       console.error('Error marking order as done:', err);
-      alert('Failed to mark order as done');
+      addToast({
+        message: 'Failed to mark order as done',
+        type: 'error',
+      });
     }
   };
-
   // Getting the weather data
   const fetchWeather = useCallback(async (city: string = 'College Station') => {
     try {
@@ -145,7 +131,6 @@ export default function KitchenMonitor() {
       const response = await fetch(`${backendUrl}/api/weather/current?city=${encodeURIComponent(city)}`, {
         credentials: 'include',
       });
-
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.weather) {
@@ -164,14 +149,12 @@ export default function KitchenMonitor() {
       setWeatherLoading(false);
     }
   }, []);
-
   // Poll for new orders every 5 seconds
   useEffect(() => {
     fetchOrders();
     const interval = setInterval(fetchOrders, 5000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
-
   useEffect(() => {
     fetchWeather();
   }, [fetchWeather]);
@@ -183,7 +166,6 @@ export default function KitchenMonitor() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -191,7 +173,6 @@ export default function KitchenMonitor() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-100 p-6 animate-fade-in">
       {/* Navigation buttons and Weather Dropdown */}
@@ -290,7 +271,6 @@ export default function KitchenMonitor() {
           Active Orders: {orders.length}
         </p>
       </div>
-
       {/* Orders Grid */}
       <div className={`grid gap-4 ${isCompactView ? 'grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'}`}>
         {orders.length === 0 ? (
@@ -319,7 +299,6 @@ export default function KitchenMonitor() {
                   </>
                 )}
               </div>
-
               {/* Order Notes */}
               {order.order_notes && (
                 <div className={`bg-yellow-50 border-l-4 border-yellow-400 ${isCompactView ? 'p-2 mx-2 mt-2' : 'p-3 mx-3 mt-3'} rounded`}>
@@ -327,7 +306,6 @@ export default function KitchenMonitor() {
                   <p className={`${isCompactView ? 'text-xs' : 'text-sm'} text-yellow-900 whitespace-pre-wrap`}>{order.order_notes}</p>
                 </div>
               )}
-
               {/* Order Items */}
               <div className={`flex-1 ${isCompactView ? 'p-2 space-y-1.5' : 'p-4 space-y-3'} overflow-y-auto`}>
                 {order.meals.map((meal, mealIdx) => (
@@ -346,7 +324,6 @@ export default function KitchenMonitor() {
                   </div>
                 ))}
               </div>
-
               {/* Done Button */}
               <div className={isCompactView ? 'p-2' : 'p-3'}>
                 {isCompactView ? (
@@ -368,7 +345,6 @@ export default function KitchenMonitor() {
                   </button>
                 )}
               </div>
-
               {/* Staff/Time Footer */}
               {!isCompactView && (
                 <div className="bg-gray-100 px-3 py-2 rounded-b-lg text-xs text-gray-600 text-center">
@@ -379,8 +355,6 @@ export default function KitchenMonitor() {
           ))
         )}
       </div>
-
-
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { useToast } from '@/app/hooks/useToast';
+
 interface MenuItem {
   menu_item_id: number;
   name: string;
@@ -22,6 +24,7 @@ export default function MenuItemsList({ filter }: MenuItemsListProps) {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<Partial<MenuItem>>({});
+  const { addToast } = useToast();
 
   useEffect(() => {
     fetchMenuItems();
@@ -88,7 +91,10 @@ export default function MenuItemsList({ filter }: MenuItemsListProps) {
       setEditForm({});
       fetchMenuItems();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update menu item');
+      addToast({
+        message: err instanceof Error ? err.message : 'Failed to update menu item',
+        type: 'error',
+      });
     }
   };
 
@@ -121,7 +127,10 @@ export default function MenuItemsList({ filter }: MenuItemsListProps) {
 
       fetchMenuItems();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update availability');
+      addToast({
+        message: err instanceof Error ? err.message : 'Failed to update availability',
+        type: 'error',
+      });
     }
   };
 
