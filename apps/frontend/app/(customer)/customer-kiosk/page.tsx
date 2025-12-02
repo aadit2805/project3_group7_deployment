@@ -97,7 +97,7 @@ const CustomerKioskContent = () => {
       }, {} as Record<number, number>);
 
       const sortedEntrees = Object.keys(entreeCounts)
-        .sort((a, b) => entreeCounts[b] - entreeCounts[a])
+        .sort((a, b) => entreeCounts[parseInt(b)] - entreeCounts[parseInt(a)])
         .slice(0, 3)
         .map(id => allEntrees.find(e => e.menu_item_id === parseInt(id)))
         .filter((e): e is MenuItem => e !== undefined);

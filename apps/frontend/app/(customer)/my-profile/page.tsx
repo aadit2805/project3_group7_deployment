@@ -11,11 +11,16 @@ interface MenuItem {
   menu_item_id: number;
   upcharge: number;
   is_available: boolean;
+  item_type: string;
 }
 
 interface MealType {
   meal_type_name: string;
   meal_type_id: number;
+  meal_type_price: number;
+  entree_count: number;
+  side_count: number;
+  drink_size: string;
 }
 
 interface OrderItem {
