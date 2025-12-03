@@ -40,6 +40,9 @@ app.use(
   })
 );
 
+// Trust the reverse proxy to correctly handle secure cookies
+app.set('trust proxy', 1);
+
 // Session setup
 app.use(
   session({
