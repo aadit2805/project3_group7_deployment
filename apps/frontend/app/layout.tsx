@@ -10,8 +10,8 @@ import ToastProvider from './context/ToastContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Project 3 - Group 7',
-  description: 'Next.js 15 + TypeScript Frontend - Restaurant Ordering System',
+  title: 'Panda Express',
+  description: 'POS System for Panda Express',
 };
 
 export default function RootLayout({
