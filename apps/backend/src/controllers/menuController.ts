@@ -438,8 +438,6 @@ export const deactivateMenuItem = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    const updatedMenuItem = result.rows[0];
-
     // Log audit entry
     await createAuditLog(req, {
       action_type: 'DEACTIVATE',

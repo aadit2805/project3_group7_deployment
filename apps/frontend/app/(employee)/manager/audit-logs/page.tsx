@@ -54,16 +54,6 @@ export default function AuditLogsPage() {
     end_date: '',
   });
 
-  // Access control
-  if (user?.role !== 'MANAGER') {
-    return (
-      <div className="text-center text-red-600 max-w-md mx-auto mt-10">
-        <p className="text-xl font-semibold mb-2">Access Denied</p>
-        <p>You must be a manager to view audit logs.</p>
-      </div>
-    );
-  }
-
   const fetchAuditLogs = async () => {
     setLoading(true);
     setError(null);
@@ -107,8 +97,11 @@ export default function AuditLogsPage() {
   };
 
   useEffect(() => {
-    fetchAuditLogs();
-  }, [filters, pagination.offset]);
+    if (user?.role === 'MANAGER') {
+      fetchAuditLogs();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, pagination.offset, user?.role]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -153,6 +146,16 @@ export default function AuditLogsPage() {
     };
     return colors[entityType] || 'bg-gray-50 text-gray-700';
   };
+
+  // Access control - check after all hooks
+  if (user?.role !== 'MANAGER') {
+    return (
+      <div className="text-center text-red-600 max-w-md mx-auto mt-10">
+        <p className="text-xl font-semibold mb-2">Access Denied</p>
+        <p>You must be a manager to view audit logs.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in">
