@@ -42,7 +42,7 @@ async function getStaffId(req: Request): Promise<number | undefined> {
 /**
  * GET /api/discounts - Get all discounts (manager only)
  */
-export const getAllDiscountsController = async (req: Request, res: Response): Promise<void> => {
+export const getAllDiscountsController = async (_req: Request, res: Response): Promise<void> => {
   try {
     const discounts = await getAllDiscounts();
     res.status(200).json({ success: true, data: discounts });
@@ -59,7 +59,7 @@ export const getAllDiscountsController = async (req: Request, res: Response): Pr
 /**
  * GET /api/discounts/active - Get active discounts (public)
  */
-export const getActiveDiscountsController = async (req: Request, res: Response): Promise<void> => {
+export const getActiveDiscountsController = async (_req: Request, res: Response): Promise<void> => {
   try {
     const discounts = await getActiveDiscounts();
     res.status(200).json({ success: true, data: discounts });

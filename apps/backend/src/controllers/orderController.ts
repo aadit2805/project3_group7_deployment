@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import prisma from '../config/prisma'; // Import centralized Prisma instance
 import { createAuditLog } from '../services/auditService';
-import { validateDiscount, calculateDiscountAmount, incrementDiscountUsage } from '../services/discountService';
+import { validateDiscount, calculateDiscountAmount } from '../services/discountService';
 
 // Cache for rush orders and order notes (in-memory storage)
 const rushOrderCache = new Map<number, boolean>();

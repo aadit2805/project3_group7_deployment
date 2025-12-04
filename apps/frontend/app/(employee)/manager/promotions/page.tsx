@@ -50,15 +50,6 @@ export default function PromotionsPage() {
     usage_limit: '',
   });
 
-  if (user?.role !== 'MANAGER') {
-    return (
-      <div className="text-center text-red-600 max-w-md mx-auto mt-10">
-        <p className="text-xl font-semibold mb-2">Access Denied</p>
-        <p>You must be a manager to manage promotional discounts.</p>
-      </div>
-    );
-  }
-
   const fetchDiscounts = async () => {
     setLoading(true);
     try {
@@ -75,8 +66,11 @@ export default function PromotionsPage() {
   };
 
   useEffect(() => {
-    fetchDiscounts();
-  }, []);
+    if (user?.role === 'MANAGER') {
+      fetchDiscounts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
 
   const handleOpenModal = (discount?: PromotionalDiscount) => {
     if (discount) {
@@ -221,6 +215,16 @@ export default function PromotionsPage() {
 
     return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>;
   };
+
+  // Access control - check after all hooks
+  if (user?.role !== 'MANAGER') {
+    return (
+      <div className="text-center text-red-600 max-w-md mx-auto mt-10">
+        <p className="text-xl font-semibold mb-2">Access Denied</p>
+        <p>You must be a manager to manage promotional discounts.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in">
