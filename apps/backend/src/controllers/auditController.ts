@@ -1,24 +1,27 @@
 import { Request, Response } from 'express';
 import { getAuditLogs } from '../services/auditService';
 
+interface AuditLogFilterOptions {
+  staff_id?: number;
+  entity_type?: string;
+  entity_id?: string;
+  action_type?: string;
+  start_date?: Date;
+  end_date?: Date;
+  limit?: number;
+  offset?: number;
+}
+
 /**
  * Get audit logs with optional filtering
  * GET /api/audit-logs?staff_id=1&entity_type=menu_item&action_type=UPDATE&start_date=2024-01-01&end_date=2024-12-31&limit=50&offset=0
  */
 export const getAuditLogsController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {
-      staff_id,
-      entity_type,
-      entity_id,
-      action_type,
-      start_date,
-      end_date,
-      limit,
-      offset,
-    } = req.query;
+    const { staff_id, entity_type, entity_id, action_type, start_date, end_date, limit, offset } =
+      req.query;
 
-    const options: any = {};
+    const options: AuditLogFilterOptions = {};
 
     if (staff_id) {
       options.staff_id = parseInt(staff_id as string, 10);
@@ -103,4 +106,3 @@ export const getAuditLogsController = async (req: Request, res: Response): Promi
     });
   }
 };
-

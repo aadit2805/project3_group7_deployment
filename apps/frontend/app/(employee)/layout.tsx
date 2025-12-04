@@ -3,7 +3,7 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ClipboardList, Monitor, LayoutDashboard, UserCog, BarChart2, LogOut, FileText } from 'lucide-react';
+import { ClipboardList, Monitor, LayoutDashboard, UserCog, BarChart2, LogOut, FileText, Tag } from 'lucide-react';
 import { EmployeeContext } from '@/app/context/EmployeeContext';
 import ToastProvider from '@/app/context/ToastContext';
 
@@ -57,6 +57,7 @@ const EmployeeLayout = ({ children }: { children: ReactNode }) => {
     { href: '/manager/employees', label: 'Employees', icon: UserCog },
     { href: '/manager/revenue-reports', label: 'Revenue', icon: BarChart2 },
     { href: '/manager/audit-logs', label: 'Audit Logs', icon: FileText },
+    { href: '/manager/promotions', label: 'Promotions', icon: Tag },
   ];
 
   const navLinks = user?.role === 'MANAGER' ? [...cashierLinks, ...managerLinks] : cashierLinks;

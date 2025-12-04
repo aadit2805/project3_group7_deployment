@@ -13,6 +13,10 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
   const router = useRouter();
   const [isRushOrder, setIsRushOrder] = useState<boolean>(false);
   const [orderNotes, setOrderNotes] = useState<string>('');
+  const [discountCode, setDiscountCode] = useState<string>('');
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [discountName, setDiscountName] = useState<string>('');
+  const [validatingDiscount, setValidatingDiscount] = useState<boolean>(false);
   const { addToast } = useToast();
 
   // Define all text labels that need translation
@@ -32,6 +36,11 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
     'An error occurred while submitting the order.',
     'Order Notes',
     'Mark as Rush Order',
+    'Discount Code',
+    'Apply Discount',
+    'Remove Discount',
+    'Validating...',
+    'Discount Applied',
   ];
 
   const { translatedTexts, isTranslating } = useTranslatedTexts(textLabels);
@@ -53,6 +62,11 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
     errorMessage: translatedTexts[12] || 'An error occurred while submitting the order.',
     orderNotes: translatedTexts[13] || 'Order Notes',
     markAsRushOrder: translatedTexts[14] || 'Mark as Rush Order',
+    discountCode: translatedTexts[15] || 'Discount Code',
+    applyDiscount: translatedTexts[16] || 'Apply Discount',
+    removeDiscount: translatedTexts[17] || 'Remove Discount',
+    validating: translatedTexts[18] || 'Validating...',
+    discountApplied: translatedTexts[19] || 'Discount Applied',
   };
 
   if (!context || !employeeContext) {
@@ -61,6 +75,9 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
 
   const { user } = employeeContext; // Get user from EmployeeContext
   const { order, setOrder, totalPrice } = context;
+
+  // Calculate final price with discount
+  const finalPrice = Math.max(0, totalPrice - discountAmount);
 
   const handleEditItem = (index: number) => {
     const itemToEdit = order[index];
@@ -75,6 +92,53 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
     setOrder(newOrder);
   };
 
+  const handleValidateDiscount = async () => {
+    if (!discountCode.trim()) {
+      addToast({ message: 'Please enter a discount code', type: 'error' });
+      return;
+    }
+
+    setValidatingDiscount(true);
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/api/discounts/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: discountCode.trim().toUpperCase(),
+          order_total: totalPrice,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.valid && data.discount) {
+        setDiscountAmount(data.discount_amount);
+        setDiscountName(data.discount.name);
+        addToast({ message: `${t.discountApplied}: ${data.discount.name}`, type: 'success' });
+      } else {
+        setDiscountAmount(0);
+        setDiscountName('');
+        addToast({ message: data.error || 'Invalid discount code', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error validating discount:', error);
+      addToast({ message: 'Error validating discount code', type: 'error' });
+      setDiscountAmount(0);
+      setDiscountName('');
+    } finally {
+      setValidatingDiscount(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setDiscountCode('');
+    setDiscountAmount(0);
+    setDiscountName('');
+  };
+
   const handleSubmitOrder = async () => {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
@@ -83,7 +147,13 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ order_items: order, rush_order: isRushOrder, order_notes: orderNotes, staff_id: user?.id }), // Include staff_id
+        body: JSON.stringify({
+          order_items: order,
+          rush_order: isRushOrder,
+          order_notes: orderNotes,
+          staff_id: user?.id,
+          discount_code: discountCode.trim() || undefined,
+        }),
       });
 
               if (response.ok) {
@@ -93,6 +163,9 @@ const OrderPane = ({ onOrderSubmitSuccess }: { onOrderSubmitSuccess?: () => void
                 setOrder([]);
                 setIsRushOrder(false);
                 setOrderNotes('');
+                setDiscountCode('');
+                setDiscountAmount(0);
+                setDiscountName('');
 
                 localStorage.removeItem('order');
 
@@ -200,9 +273,64 @@ Error: ${errorData.error}` : ''}`, type: 'error' });
             })}
           </ul>
           <div className="text-right mt-6 pt-4 border-t-2 border-gray-300">
-            <p className="text-2xl font-bold mb-4" role="status" aria-live="polite">
-              {t.total}: <span aria-label={`Total price ${totalPrice.toFixed(2)} dollars`}>${totalPrice.toFixed(2)}</span>
+            <p className="text-2xl font-bold mb-2" role="status" aria-live="polite">
+              {t.total}: <span aria-label={`Subtotal ${totalPrice.toFixed(2)} dollars`}>${totalPrice.toFixed(2)}</span>
             </p>
+
+            {/* Discount Code Section */}
+            <div className="mb-4">
+              {!discountAmount ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleValidateDiscount();
+                      }
+                    }}
+                    placeholder="Enter discount code"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="Discount code input"
+                  />
+                  <button
+                    onClick={handleValidateDiscount}
+                    disabled={validatingDiscount || !discountCode.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed button-press"
+                  >
+                    {validatingDiscount ? t.validating : t.applyDiscount}
+                  </button>
+                </div>
+              ) : (
+                <div className="mb-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-green-800">{discountName}</p>
+                      <p className="text-lg font-bold text-green-700">
+                        Discount: -${discountAmount.toFixed(2)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRemoveDiscount}
+                      className="text-red-600 hover:text-red-800 button-press"
+                      aria-label="Remove discount"
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {discountAmount > 0 && (
+              <p className="text-2xl font-bold mb-4 text-green-700" role="status" aria-live="polite">
+                Final Total: <span aria-label={`Final total ${finalPrice.toFixed(2)} dollars`}>${finalPrice.toFixed(2)}</span>
+              </p>
+            )}
             <div className="mb-4">
               <label htmlFor="order-notes" className="block text-lg font-semibold text-gray-700 mb-2">
                 {t.orderNotes}:
@@ -234,7 +362,7 @@ Error: ${errorData.error}` : ''}`, type: 'error' });
               onClick={handleSubmitOrder}
               className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-xl mt-4 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isTranslating || order.length === 0}
-              aria-label={`Submit order with ${order.length} item${order.length !== 1 ? 's' : ''}, total ${totalPrice.toFixed(2)} dollars`}
+              aria-label={`Submit order with ${order.length} item${order.length !== 1 ? 's' : ''}, total ${finalPrice.toFixed(2)} dollars`}
             >
               {t.submitOrder}
             </button>

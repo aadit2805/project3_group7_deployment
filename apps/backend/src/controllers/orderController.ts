@@ -2,13 +2,14 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import prisma from '../config/prisma'; // Import centralized Prisma instance
 import { createAuditLog } from '../services/auditService';
+import { validateDiscount, calculateDiscountAmount } from '../services/discountService';
 
 // Cache for rush orders and order notes (in-memory storage)
 const rushOrderCache = new Map<number, boolean>();
 const orderNotesCache = new Map<number, string>();
 
 export const createOrder = async (req: Request, res: Response) => {
-  const { order_items, customer_name, rush_order, order_notes, customerId, pointsApplied, staff_id } = req.body; // Added customer_name, rush_order, order_notes, customerId, pointsApplied, staff_id
+  const { order_items, customer_name, rush_order, order_notes, customerId, pointsApplied, staff_id, discount_code } = req.body; // Added discount_code
 
   if (!order_items || !Array.isArray(order_items) || order_items.length === 0) {
     return res.status(400).json({ success: false, error: 'Order items are required' });
@@ -117,15 +118,61 @@ export const createOrder = async (req: Request, res: Response) => {
       nextMealId++;
     }
     
-    // Calculate final price after point deduction
-    let finalPrice = totalPrice;
+    // Apply promotional discount if provided
+    let discountAmount = 0;
+    let appliedDiscountId: number | null = null;
+    
+    if (discount_code) {
+      const discountValidation = await validateDiscount(discount_code, totalPrice);
+      if (discountValidation.valid && discountValidation.discount) {
+        discountAmount = calculateDiscountAmount(discountValidation.discount, totalPrice);
+        appliedDiscountId = discountValidation.discount.id;
+      } else {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: discountValidation.error || 'Invalid discount code',
+        });
+      }
+    }
+
+    // Calculate final price after discount and point deduction
+    let finalPrice = totalPrice - discountAmount;
     if (pointsApplied && pointsApplied > 0) {
         const discountValue = pointsApplied / POINTS_PER_DOLLAR;
-        finalPrice = Math.max(0, totalPrice - discountValue); // Ensure price doesn't go below 0
+        finalPrice = Math.max(0, finalPrice - discountValue); // Ensure price doesn't go below 0
     }
 
     // Update the order with the calculated final price
     await client.query('UPDATE "Order" SET price = $1 WHERE order_id = $2', [finalPrice, orderId]);
+
+    // Record discount usage if discount was applied (before commit, within transaction)
+    if (appliedDiscountId && discountAmount > 0) {
+      try {
+        // Get next OrderDiscount ID
+        const maxDiscountIdResult = await client.query('SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM "OrderDiscount"');
+        const nextDiscountId = maxDiscountIdResult.rows[0].next_id;
+
+        // Create order discount record using raw SQL to stay in transaction
+        await client.query(
+          'INSERT INTO "OrderDiscount" (id, order_id, discount_id, discount_amount, created_at) VALUES ($1, $2, $3, $4, NOW())',
+          [nextDiscountId, orderId, appliedDiscountId, discountAmount]
+        );
+
+        // Increment usage count using raw SQL to stay in transaction
+        await client.query(
+          'UPDATE "PromotionalDiscount" SET usage_count = usage_count + 1 WHERE id = $1',
+          [appliedDiscountId]
+        );
+      } catch (error) {
+        console.error('Error recording discount usage:', error);
+        await client.query('ROLLBACK');
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to record discount usage',
+        });
+      }
+    }
 
     // Deduct points from customer and award new points (if applicable)
     if (customerId) {
@@ -147,7 +194,14 @@ export const createOrder = async (req: Request, res: Response) => {
 
     await client.query('COMMIT'); // Commit transaction
 
-    return res.status(201).json({ success: true, data: { orderId, totalPrice: finalPrice } });
+    return res.status(201).json({
+      success: true,
+      data: {
+        orderId,
+        totalPrice: finalPrice,
+        discountAmount: discountAmount > 0 ? discountAmount : undefined,
+      },
+    });
   } catch (error) {
     await client.query('ROLLBACK'); // Rollback on error
     console.error('Error creating order:', error);

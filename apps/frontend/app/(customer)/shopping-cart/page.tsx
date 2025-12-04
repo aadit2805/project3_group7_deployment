@@ -39,6 +39,12 @@ const ShoppingCart = () => {
     'Total After Discount', // New
     'You have no points to apply.', // New
     'Error fetching points.', // New
+    'Discount Code', // New
+    'Apply Discount', // New
+    'Remove Discount', // New
+    'Validating...', // New
+    'Discount Applied', // New
+    'Promotional Discount', // New
   ];
 
   const { translatedTexts } = useTranslatedTexts(textLabels);
@@ -66,6 +72,12 @@ const ShoppingCart = () => {
     totalAfterDiscount: translatedTexts[19] || 'Total After Discount',
     noPoints: translatedTexts[20] || 'You have no points to apply.',
     errorFetchingPoints: translatedTexts[21] || 'Error fetching points.',
+    discountCode: translatedTexts[22] || 'Discount Code',
+    applyDiscount: translatedTexts[23] || 'Apply Discount',
+    removeDiscount: translatedTexts[24] || 'Remove Discount',
+    validating: translatedTexts[25] || 'Validating...',
+    discountApplied: translatedTexts[26] || 'Discount Applied',
+    promotionalDiscount: translatedTexts[27] || 'Promotional Discount',
   };
 
   const order = context?.order || [];
@@ -75,14 +87,20 @@ const ShoppingCart = () => {
   const [customerPoints, setCustomerPoints] = useState<number | null>(null);
   const [usePoints, setUsePoints] = useState(false);
   const [pointsApplied, setPointsApplied] = useState(0);
-  const [discountAmount, setDiscountAmount] = useState(0);
+  const [pointsDiscountAmount, setPointsDiscountAmount] = useState(0);
+  const [discountCode, setDiscountCode] = useState<string>('');
+  const [promoDiscountAmount, setPromoDiscountAmount] = useState<number>(0);
+  const [promoDiscountName, setPromoDiscountName] = useState<string>('');
+  const [validatingDiscount, setValidatingDiscount] = useState<boolean>(false);
   const [fetchingPoints, setFetchingPoints] = useState(true);
   const [pointsError, setPointsError] = useState<string | null>(null);
 
   const POINTS_PER_DOLLAR = 25; // Define conversion rate
 
-  // Calculate total price including discount
-  const totalPrice = baseTotalPrice - discountAmount;
+  // Calculate total price including both promotional discount and points discount
+  // Apply promotional discount first, then points discount
+  const priceAfterPromo = Math.max(0, baseTotalPrice - promoDiscountAmount);
+  const totalPrice = Math.max(0, priceAfterPromo - pointsDiscountAmount);
 
   // Effect to fetch customer points
   useEffect(() => {
@@ -125,17 +143,19 @@ const ShoppingCart = () => {
   }, [baseTotalPrice, t.errorFetchingPoints]); // Re-fetch if baseTotalPrice changes
 
   // Effect to calculate discount when points, usage, or total price changes
+  // Note: Points discount is calculated on price after promotional discount
   useEffect(() => {
-    if (usePoints && customerPoints !== null && customerPoints > 0 && baseTotalPrice > 0) {
+    const priceAfterPromo = Math.max(0, baseTotalPrice - promoDiscountAmount);
+    if (usePoints && customerPoints !== null && customerPoints > 0 && priceAfterPromo > 0) {
       const availableDiscountValue = customerPoints / POINTS_PER_DOLLAR;
-      const actualDiscount = Math.min(availableDiscountValue, baseTotalPrice);
-      setDiscountAmount(actualDiscount);
+      const actualDiscount = Math.min(availableDiscountValue, priceAfterPromo);
+      setPointsDiscountAmount(actualDiscount);
       setPointsApplied(Math.floor(actualDiscount * POINTS_PER_DOLLAR));
     } else {
-      setDiscountAmount(0);
+      setPointsDiscountAmount(0);
       setPointsApplied(0);
     }
-  }, [usePoints, customerPoints, baseTotalPrice, POINTS_PER_DOLLAR]);
+  }, [usePoints, customerPoints, baseTotalPrice, promoDiscountAmount, POINTS_PER_DOLLAR]);
 
   // Translate all names in the order
   useEffect(() => {
@@ -202,21 +222,76 @@ const ShoppingCart = () => {
     setOrder(newOrder);
   };
 
+  const handleValidateDiscount = async () => {
+    if (!discountCode.trim()) {
+      addToast({ message: 'Please enter a discount code', type: 'error' });
+      return;
+    }
+
+    setValidatingDiscount(true);
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/api/discounts/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: discountCode.trim().toUpperCase(),
+          order_total: baseTotalPrice,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.valid && data.discount) {
+        setPromoDiscountAmount(data.discount_amount);
+        setPromoDiscountName(data.discount.name);
+        addToast({ message: `${t.discountApplied}: ${data.discount.name}`, type: 'success' });
+      } else {
+        setPromoDiscountAmount(0);
+        setPromoDiscountName('');
+        addToast({ message: data.error || 'Invalid discount code', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error validating discount:', error);
+      addToast({ message: 'Error validating discount code', type: 'error' });
+      setPromoDiscountAmount(0);
+      setPromoDiscountName('');
+    } finally {
+      setValidatingDiscount(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setDiscountCode('');
+    setPromoDiscountAmount(0);
+    setPromoDiscountName('');
+  };
+
   const handleSubmitOrder = async () => {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
       const customerId = localStorage.getItem('customerId'); // Retrieve customerId
 
-      const requestBody: { order_items: OrderItem[]; customerId?: string; pointsApplied?: number } =
-        {
-          order_items: order,
-        };
+      const requestBody: {
+        order_items: OrderItem[];
+        customerId?: string;
+        pointsApplied?: number;
+        discount_code?: string;
+      } = {
+        order_items: order,
+      };
 
       if (customerId) {
         requestBody.customerId = customerId;
         if (usePoints && pointsApplied > 0) {
           requestBody.pointsApplied = pointsApplied;
         }
+      }
+
+      if (discountCode.trim()) {
+        requestBody.discount_code = discountCode.trim().toUpperCase();
       }
 
       const response = await fetch(`${backendUrl}/api/orders`, {
@@ -230,6 +305,11 @@ const ShoppingCart = () => {
       if (response.ok) {
         addToast({ message: t.successMessage, type: 'success' });
         setOrder([]);
+        setDiscountCode('');
+        setPromoDiscountAmount(0);
+        setPromoDiscountName('');
+        setUsePoints(false);
+        setPointsApplied(0);
         localStorage.removeItem('order');
         router.push('/meal-type-selection');
       } else {
@@ -399,6 +479,56 @@ const ShoppingCart = () => {
               })}
             </ul>
             <div className="mt-6 pt-4 border-t-2 border-gray-300">
+              {/* Discount Code Section */}
+              <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <label className="block text-lg font-semibold text-gray-700 mb-2">
+                  {t.discountCode}:
+                </label>
+                {!promoDiscountAmount ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleValidateDiscount();
+                        }
+                      }}
+                      placeholder="Enter discount code"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      aria-label="Discount code input"
+                    />
+                    <button
+                      onClick={handleValidateDiscount}
+                      disabled={validatingDiscount || !discountCode.trim()}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed button-press"
+                    >
+                      {validatingDiscount ? t.validating : t.applyDiscount}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-md">
+                    <div>
+                      <p className="text-sm font-semibold text-green-800">{promoDiscountName}</p>
+                      <p className="text-lg font-bold text-green-700">
+                        {t.promotionalDiscount}: -${promoDiscountAmount.toFixed(2)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRemoveDiscount}
+                      className="text-red-600 hover:text-red-800 button-press"
+                      aria-label="Remove discount"
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Rewards Points Section */}
               {localStorage.getItem('customerToken') && !fetchingPoints && (
                 <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
@@ -434,28 +564,44 @@ const ShoppingCart = () => {
                 </p>
               </div>
 
-              {usePoints && discountAmount > 0 && (
-                <>
-                  <div className="flex flex-wrap justify-center sm:justify-between items-center mb-2 text-green-700 gap-y-2">
-                    <p className="text-lg sm:text-xl font-bold">
-                      {t.pointsDiscount}:{' '}
-                      <span aria-label={`Discount amount ${discountAmount.toFixed(2)} dollars`}>
-                        -${discountAmount.toFixed(2)}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap justify-center sm:justify-between items-center mb-4 border-t pt-2 border-gray-300 gap-y-2">
-                    <p className="text-xl sm:text-2xl font-bold" role="status" aria-live="polite">
-                      {t.totalAfterDiscount}:{' '}
-                      <span aria-label={`Final total price ${totalPrice.toFixed(2)} dollars`}>
-                        ${totalPrice.toFixed(2)}
-                      </span>
-                    </p>
-                  </div>
-                </>
+              {/* Show promotional discount if applied */}
+              {promoDiscountAmount > 0 && (
+                <div className="flex flex-wrap justify-center sm:justify-between items-center mb-2 text-green-700 gap-y-2">
+                  <p className="text-lg sm:text-xl font-bold">
+                    {t.promotionalDiscount}:{' '}
+                    <span aria-label={`Promotional discount ${promoDiscountAmount.toFixed(2)} dollars`}>
+                      -${promoDiscountAmount.toFixed(2)}
+                    </span>
+                  </p>
+                </div>
               )}
 
-              {!usePoints || discountAmount === 0 ? (
+              {/* Show points discount if applied */}
+              {usePoints && pointsDiscountAmount > 0 && (
+                <div className="flex flex-wrap justify-center sm:justify-between items-center mb-2 text-green-700 gap-y-2">
+                  <p className="text-lg sm:text-xl font-bold">
+                    {t.pointsDiscount}:{' '}
+                    <span aria-label={`Points discount ${pointsDiscountAmount.toFixed(2)} dollars`}>
+                      -${pointsDiscountAmount.toFixed(2)}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              {/* Show final total */}
+              {(promoDiscountAmount > 0 || (usePoints && pointsDiscountAmount > 0)) && (
+                <div className="flex flex-wrap justify-center sm:justify-between items-center mb-4 border-t pt-2 border-gray-300 gap-y-2">
+                  <p className="text-xl sm:text-2xl font-bold" role="status" aria-live="polite">
+                    {t.totalAfterDiscount}:{' '}
+                    <span aria-label={`Final total price ${totalPrice.toFixed(2)} dollars`}>
+                      ${totalPrice.toFixed(2)}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              {/* Show regular total if no discounts */}
+              {promoDiscountAmount === 0 && (!usePoints || pointsDiscountAmount === 0) && (
                 <div className="flex flex-wrap justify-center sm:justify-between items-center mb-4 gap-y-2">
                   <p className="text-xl sm:text-2xl font-bold" role="status" aria-live="polite">
                     {t.total}:{' '}
@@ -464,7 +610,7 @@ const ShoppingCart = () => {
                     </span>
                   </p>
                 </div>
-              ) : null}
+              )}
 
               <button
                 onClick={handleSubmitOrder}

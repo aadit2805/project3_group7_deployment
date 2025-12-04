@@ -42,6 +42,15 @@ import {
   getAuthenticatedUserController, // Import getAuthenticatedUserController
 } from '../controllers/staffController'; // Import all staff controllers
 import { getAuditLogsController } from '../controllers/auditController';
+import {
+  getAllDiscountsController,
+  getActiveDiscountsController,
+  getDiscountByIdController,
+  createDiscountController,
+  updateDiscountController,
+  deleteDiscountController,
+  validateDiscountController,
+} from '../controllers/discountController';
 import { ApiResponse } from '../types';
 import pool from '../config/db';
 import translationRoutes from './translation.routes';
@@ -164,6 +173,15 @@ router.use('/users', isAuthenticated, isManager, userRoutes);
 
 // Audit log routes (manager only)
 router.get('/audit-logs', isAuthenticated, isManager, getAuditLogsController);
+
+// Promotional discount routes
+router.get('/discounts/active', getActiveDiscountsController); // Public - for customers
+router.post('/discounts/validate', validateDiscountController); // Public - for validating codes
+router.get('/discounts', isAuthenticated, isManager, getAllDiscountsController); // Manager only
+router.get('/discounts/:id', isAuthenticated, isManager, getDiscountByIdController); // Manager only
+router.post('/discounts', isAuthenticated, isManager, createDiscountController); // Manager only
+router.put('/discounts/:id', isAuthenticated, isManager, updateDiscountController); // Manager only
+router.delete('/discounts/:id', isAuthenticated, isManager, deleteDiscountController); // Manager only
 
 // Customer authentication routes
 router.use('/customer/auth', customerAuthRoutes); // Integrate new customer auth routes

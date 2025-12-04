@@ -8,18 +8,19 @@ datasource db {
 }
 
 model Order {
-  order_id      Int       @id @default(autoincrement())
+  order_id      Int             @id @default(autoincrement())
   staff_id      Int?
-  datetime      DateTime? @db.Timestamp(6)
+  datetime      DateTime?       @db.Timestamp(6)
   price         Float?
-  order_status  String?   @db.VarChar(50)
-  customer_name String?   @db.VarChar(255)
-  completed_at  DateTime? @db.Timestamp(6)
+  order_status  String?         @db.VarChar(50)
+  customer_name String?         @db.VarChar(255)
+  completed_at  DateTime?       @db.Timestamp(6)
   customerId    String? // Link to Customer.id
-  customer      Customer? @relation(fields: [customerId], references: [id])
-  staff         staff?    @relation(fields: [staff_id], references: [staff_id], onDelete: NoAction, onUpdate: NoAction)
+  customer      Customer?       @relation(fields: [customerId], references: [id])
+  staff         staff?          @relation(fields: [staff_id], references: [staff_id], onDelete: NoAction, onUpdate: NoAction)
   meal          meal[]
   payment       payment[]
+  discounts     OrderDiscount[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -103,14 +104,15 @@ model payment {
 }
 
 model staff {
-  staff_id      Int        @id @default(autoincrement())
-  username      String     @unique @db.VarChar(255)
-  password_hash String     @db.VarChar(255)
-  role          String     @default("CASHIER") @db.VarChar(50)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  Order         Order[]
-  AuditLog      AuditLog[]
+  staff_id            Int                   @id @default(autoincrement())
+  username            String                @unique @db.VarChar(255)
+  password_hash       String                @db.VarChar(255)
+  role                String                @default("CASHIER") @db.VarChar(50)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  Order               Order[]
+  AuditLog            AuditLog[]
+  PromotionalDiscount PromotionalDiscount[]
 }
 
 model Customer {
@@ -154,4 +156,43 @@ model AuditLog {
   @@index([entity_type, entity_id])
   @@index([created_at])
   @@index([action_type])
+}
+
+model PromotionalDiscount {
+  id                  Int             @id @default(autoincrement())
+  code                String          @unique @db.VarChar(50) // Discount code (e.g., "SUMMER20")
+  name                String          @db.VarChar(255) // Display name (e.g., "Summer Sale")
+  description         String?         @db.Text // Description of the promotion
+  discount_type       String          @db.VarChar(20) // "PERCENTAGE" or "FIXED_AMOUNT"
+  discount_value      Decimal         @db.Decimal(10, 2) // Percentage (0-100) or fixed amount in dollars
+  min_order_amount    Decimal?        @db.Decimal(10, 2) // Minimum order amount to apply discount
+  max_discount_amount Decimal?        @db.Decimal(10, 2) // Maximum discount amount (for percentage discounts)
+  start_date          DateTime        @db.Timestamptz(6) // When the promotion starts
+  end_date            DateTime        @db.Timestamptz(6) // When the promotion ends
+  is_active           Boolean         @default(true) // Whether the discount is currently active
+  usage_limit         Int? // Maximum number of times this discount can be used (null = unlimited)
+  usage_count         Int             @default(0) // Current usage count
+  created_by          Int? // Staff member who created the discount
+  created_by_staff    staff?          @relation(fields: [created_by], references: [staff_id], onDelete: SetNull, onUpdate: NoAction)
+  created_at          DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime        @updatedAt @db.Timestamptz(6)
+  OrderDiscount       OrderDiscount[]
+
+  @@index([code])
+  @@index([is_active])
+  @@index([start_date, end_date])
+  @@index([created_by])
+}
+
+model OrderDiscount {
+  id              Int                 @id @default(autoincrement())
+  order_id        Int // Order that used this discount
+  discount_id     Int // Promotional discount used
+  discount        PromotionalDiscount @relation(fields: [discount_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  discount_amount Decimal             @db.Decimal(10, 2) // Actual discount amount applied
+  order           Order               @relation(fields: [order_id], references: [order_id], onDelete: Cascade, onUpdate: NoAction)
+  created_at      DateTime            @default(now()) @db.Timestamptz(6)
+
+  @@index([order_id])
+  @@index([discount_id])
 }
