@@ -27,7 +27,7 @@ if (missingEnvVars.length > 0) {
 // Initialize
 const app: Express = express();
 const prisma = new PrismaClient();
-const port = process.env.PORT || 3001;
+const port = parseInt(process.env.PORT || '3001', 10);
 
 // Middleware
 app.use(express.json());
